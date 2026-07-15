@@ -1,28 +1,24 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles: none redefined; existing Principles I–V unchanged
-- Added sections:
-  - VI. Core Loop Lock (Ram/Shoot Parity, Lock-Core-Loop-First)
-  - VII. MVP Scope Discipline
-  - Platform & Controls
-  - Match Format
-  - Combat System
-  - Destructible Objects
-  - Visual Approach
-  - MVP Scope & Non-Goals
-  - Open Design Questions (deferred)
-  - Technology Constraints: added Capacitor future-path note
-  - Development Workflow: added SDD spec-format rules (acceptance criteria +
-    vertical slice breakdown, no open design discussion in final specs)
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: none; Core Principles I–VII unchanged
+- Modified sections:
+  - Platform & Controls: touch/mobile browser play is now in MVP scope
+    (previously deferred entirely pre-MVP). Added input-method
+    auto-detection requirement, a concrete touch control scheme (dual
+    virtual joysticks + buttons, mirroring the existing twin-stick
+    InputState abstraction), and a landscape-only mobile orientation
+    requirement with a rotate-device prompt for portrait. Native app
+    packaging via Capacitor remains deferred/out of scope — distinct from
+    in-browser touch play.
+- Added sections: none new (amendment within existing Platform & Controls)
 - Removed sections: none
 - Templates requiring updates:
   - ✅ .specify/templates/plan-template.md (generic "Constitution Check" gate — compatible as-is)
-  - ✅ .specify/templates/spec-template.md (technology-agnostic, already supports
-    prioritized user-story slices matching "vertical slice breakdown" — compatible as-is)
+  - ✅ .specify/templates/spec-template.md (technology-agnostic — compatible as-is)
   - ✅ .specify/templates/tasks-template.md (illustrative path conventions — compatible as-is)
   - ⚠ No .specify/templates/commands/ directory found in this repo (skills-based install) — nothing to update
-- Follow-up TODOs:
+- Follow-up TODOs (carried over, unchanged by this amendment):
   - TODO(VEHICLE_ARCHETYPES): archetype design (heavy/light/balanced) deferred —
     risk: unchecked ramming power can make shooting irrelevant.
   - TODO(WEAPON_BALANCE): concrete weapon stats (damage, cooldown, range) deferred
@@ -156,22 +152,40 @@ being minimal.
 
 ## Platform & Controls
 
-- **Target platform**: browser (WebGL), statically hosted on GitHub Pages.
-- **Future mobile path**: packaging via Capacitor is a possible future
-  direction and MUST NOT be built now — it is explicitly out of MVP scope
-  (see Non-Goals). Input code SHOULD avoid assumptions that would make a
-  future gamepad/touch layer structurally harder to add (e.g., prefer an
-  abstracted input-action layer over hardcoding keyboard event handling
-  throughout gameplay code), but no gamepad/touch implementation work
-  happens pre-MVP.
+- **Target platform**: browser (WebGL), statically hosted on GitHub Pages —
+  both desktop and mobile browsers are in scope.
+- **Future mobile path**: packaging as a native app via Capacitor remains a
+  possible future direction and MUST NOT be built now — it is explicitly
+  out of MVP scope (see Non-Goals). This is distinct from mobile *browser*
+  play, which is in scope (see Touch Controls below).
 - **Development context**: this project is developed with Claude Code,
   including from mobile, using the Spec Kit spec-driven workflow (see
   Development Workflow below).
 - **Camera**: 3D third-person.
-- **Control scheme**: twin-stick (movement + aim/fire as independent axes).
+- **Control scheme**: twin-stick (movement + aim/fire as independent axes),
+  shared across input methods via a single InputState abstraction
+  (`moveAxis`, `aimAxis`, `drift`, `turbo` — see
+  `specs/001-core-vehicle-loop/data-model.md`).
 - **Core control mechanics**: drift and turbo-boost are core to vehicle
   control (Principle VI) and MUST be present in the first driveable
   prototype, not deferred as polish.
+- **Input-method auto-detection**: the game MUST automatically detect
+  whether the player is using a touch device or keyboard/mouse and enable
+  the matching control scheme accordingly. No manual control-scheme toggle
+  is required for MVP.
+- **Touch controls**: in scope for MVP (browser-based; gamepad support
+  remains deferred/out of scope). Touch input MUST reuse the existing
+  twin-stick InputState abstraction rather than introduce a second control
+  paradigm:
+  - A left virtual joystick drives `InputState.moveAxis` (drive + steer).
+  - A right virtual joystick is present but unbound in this scope, reserved
+    for a future aim/fire feature exactly like `aimAxis` on keyboard.
+  - Drift and turbo are on-screen touch buttons (discrete/held actions, not
+    axis-like), mirroring the keyboard's Space/Shift bindings.
+- **Mobile orientation**: touch/mobile play is landscape-only. When a touch
+  device is in portrait orientation, the game MUST block gameplay and
+  display a prompt asking the player to rotate to landscape, rather than
+  attempting to render/play in portrait.
 
 ## Match Format
 
@@ -303,4 +317,4 @@ Constitution Check gate. Any complexity or deviation from a Core Principle
 MUST be explicitly justified in the plan's Complexity Tracking table; plans
 that cannot justify a deviation MUST be simplified instead.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-15
+**Version**: 1.2.0 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-15
