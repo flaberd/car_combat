@@ -147,10 +147,15 @@ export function computeSteerAngle(archetype, moveAxisX) {
  * TurboState machine that temporarily scales engine force (FR-005/FR-006).
  * Enforces the vehicle's archetype maxSpeed (002-combat-system research.md
  * §7) and does nothing once the vehicle is eliminated.
+ *
+ * `updateVehicle` is called with EXCLUDE_SENSORS so the wheels' ground
+ * raycasts ignore pickup/mine/oil-slick sensor colliders (002-combat-system)
+ * — otherwise a wheel treats one as solid ground mid-drive, bumping and
+ * snagging the vehicle at that spot.
  */
 export function stepVehicleControl(vehicle, inputState, dt) {
   if (vehicle.eliminated) {
-    vehicle.controller.updateVehicle(dt);
+    vehicle.controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
     return;
   }
 
@@ -182,7 +187,7 @@ export function stepVehicleControl(vehicle, inputState, dt) {
     controller.setWheelBrake(i, 0);
   });
 
-  controller.updateVehicle(dt);
+  controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
   clampToMaxSpeed(vehicle);
 }
 
