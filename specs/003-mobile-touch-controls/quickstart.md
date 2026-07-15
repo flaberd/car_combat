@@ -28,6 +28,25 @@ All tests MUST pass before proceeding.
 
 ## Manual validation scenarios
 
+All scenarios below (1–6) assume Scenario 0 (tapping Start) has already
+happened — the game does not begin until then.
+
+### 0. Start Gate: fullscreen and forced landscape (US5, SC-006)
+
+1. Load the game. **Expect**: only a large Start button is visible; no
+   vehicle, arena, or touch controls are visible or interactive.
+2. On a desktop browser, click Start. **Expect**: the game starts
+   immediately with no fullscreen/orientation request.
+3. On a touch-emulated device, tap Start. **Expect**: the browser requests
+   fullscreen; on a browser that supports `screen.orientation.lock()`
+   (e.g. Chrome/Firefox on Android), the display is forced to landscape
+   even if the emulated device's rotation lock is "on"/auto-rotate is off.
+4. On a touch-emulated device whose browser doesn't support orientation
+   locking (e.g. an iOS Safari–class browser), tap Start. **Expect**: the
+   game still starts (fullscreen may or may not succeed depending on the
+   browser), and User Story 4's rotate-prompt gate (Scenario 5 below)
+   remains the operative fallback for orientation.
+
 ### 1. Auto-detection on load (US1, SC-001/SC-002)
 
 1. Open the dev server URL in a desktop browser (no device emulation).

@@ -3,6 +3,7 @@ import { createPhysicsWorld, FIXED_TIMESTEP } from "./physics/world.js";
 import { createArena } from "./arena/arena.js";
 import { createFollowCamera } from "./camera/followCamera.js";
 import { createInputController } from "./input/inputController.js";
+import { createStartGate } from "./input/startGate.js";
 import { createVehicle, stepVehicleControl } from "./vehicle/vehicle.js";
 
 async function main() {
@@ -48,6 +49,10 @@ async function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
+  const startGate = createStartGate();
+  const startGateEl = document.getElementById("start-gate");
+  const startButtonEl = document.getElementById("start-button");
+
   let physicsAccumulator = 0;
   let lastTime = performance.now();
 
@@ -74,7 +79,12 @@ async function main() {
     renderer.render(scene, camera);
   }
 
-  requestAnimationFrame(animate);
+  startButtonEl.addEventListener("click", async () => {
+    await startGate.start(inputController.getMode());
+    startGateEl.classList.add("hidden");
+    lastTime = performance.now();
+    requestAnimationFrame(animate);
+  });
 }
 
 main();
