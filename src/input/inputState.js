@@ -1,7 +1,6 @@
 // Keyboard -> InputState mapping (data-model.md InputState; FR-002/003/004/005/007).
-// `aimAxis` is exposed now but stays {0,0} in this slice — reserved for the
-// future aim/fire feature (002-combat-system) so the input layer doesn't
-// need reworking later.
+// `aimAxis` is exposed now but stays {0,0} — weapons fire in the vehicle's
+// facing direction (002-combat-system research.md §9), no independent aim.
 
 const KEY_BINDINGS = {
   moveForward: ["KeyW", "ArrowUp"],
@@ -10,6 +9,8 @@ const KEY_BINDINGS = {
   steerRight: ["KeyD", "ArrowRight"],
   drift: ["Space"],
   turbo: ["ShiftLeft", "ShiftRight"],
+  fire: ["KeyF"],
+  usePickup: ["KeyE"],
 };
 
 function isAnyDown(keysDown, codes) {
@@ -44,6 +45,8 @@ export function mapKeysToInputState(keysDown, previousTurboKeyDown) {
     aimAxis: { x: 0, y: 0 },
     drift: isAnyDown(keysDown, KEY_BINDINGS.drift),
     turbo: turboPressed,
+    fire: isAnyDown(keysDown, KEY_BINDINGS.fire),
+    usePickup: isAnyDown(keysDown, KEY_BINDINGS.usePickup),
   };
 
   return { inputState, turboKeyDown };

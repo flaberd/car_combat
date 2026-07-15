@@ -72,6 +72,14 @@
   right: 140px;
 }
 
+#touch-button-fire {
+  left: 48px;
+}
+
+#touch-button-use {
+  left: 140px;
+}
+
 .touch-button.pressed {
   background: rgba(255, 255, 255, 0.4);
 }
@@ -112,5 +120,43 @@
 }
 
 #start-button:active {
+  background: #1a4fb0;
+}
+
+#archetype-select {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: #111;
+  color: #fff;
+  font: 500 20px/1.4 system-ui, sans-serif;
+  text-align: center;
+  padding: 24px;
+}
+
+#archetype-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.archetype-button {
+  padding: 20px 32px;
+  border: none;
+  border-radius: 12px;
+  background: #2266dd;
+  color: #fff;
+  font: 700 22px/1 system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.archetype-button:active {
   background: #1a4fb0;
 }

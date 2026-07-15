@@ -77,18 +77,28 @@ export function createTouchInput(document) {
   const turboButton = createTouchButton(
     document.getElementById("touch-button-turbo"),
   );
+  const fireButton = createTouchButton(
+    document.getElementById("touch-button-fire"),
+  );
+  const useButton = createTouchButton(
+    document.getElementById("touch-button-use"),
+  );
 
   return {
     leftJoystick,
     rightJoystick,
     driftButton,
     turboButton,
+    fireButton,
+    useButton,
     read() {
       return {
         moveAxis: { x: leftJoystick.axis.x, y: leftJoystick.axis.y },
         aimAxis: { x: 0, y: 0 },
         drift: driftButton.pressed,
         turbo: turboButton.consumeEdge(),
+        fire: fireButton.pressed,
+        usePickup: useButton.pressed,
       };
     },
     dispose() {
@@ -96,6 +106,8 @@ export function createTouchInput(document) {
       rightJoystick.dispose();
       driftButton.dispose();
       turboButton.dispose();
+      fireButton.dispose();
+      useButton.dispose();
     },
   };
 }
