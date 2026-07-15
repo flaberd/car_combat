@@ -57,19 +57,15 @@ function createTouchButton(rootEl) {
 /**
  * Touch input source (FR-002-FR-005): produces the same InputState shape
  * as keyboard (src/input/inputState.js). The left joystick drives
- * moveAxis; the right joystick is wired up but its axis is intentionally
- * not read into InputState.aimAxis (stays {0,0}), reserved for a future
- * feature per FR-003. Drift is held (matches keyboard Space); Turbo is
- * edge-triggered on press (matches keyboard Shift).
+ * moveAxis; there is no aim joystick — weapons fire in the vehicle's
+ * facing direction (aimAxis stays {0,0}, 002-combat-system research.md
+ * §9). Drift is held (matches keyboard Space); Turbo is edge-triggered
+ * on press (matches keyboard Shift).
  */
 export function createTouchInput(document) {
   const leftJoystick = createVirtualJoystick(
     document.getElementById("joystick-left"),
     document.getElementById("joystick-left").querySelector(".joystick-knob"),
-  );
-  const rightJoystick = createVirtualJoystick(
-    document.getElementById("joystick-right"),
-    document.getElementById("joystick-right").querySelector(".joystick-knob"),
   );
   const driftButton = createTouchButton(
     document.getElementById("touch-button-drift"),
@@ -86,7 +82,6 @@ export function createTouchInput(document) {
 
   return {
     leftJoystick,
-    rightJoystick,
     driftButton,
     turboButton,
     fireButton,
@@ -103,7 +98,6 @@ export function createTouchInput(document) {
     },
     dispose() {
       leftJoystick.dispose();
-      rightJoystick.dispose();
       driftButton.dispose();
       turboButton.dispose();
       fireButton.dispose();
