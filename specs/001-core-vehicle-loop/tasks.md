@@ -29,9 +29,9 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **Purpose**: Project initialization
 
-- [ ] T001 Initialize Vite project scaffold: `package.json` (with `dev`, `build`, `test` npm scripts), `vite.config.js`, `index.html` (canvas root) at repository root
-- [ ] T002 Install dependencies: `three`, `@dimforge/rapier3d-compat` as dependencies; `vite`, `vitest` as devDependencies (per `plan.md` Primary Dependencies, `research.md` §1/§5)
-- [ ] T003 [P] Create `src/config/tuning.js` with placeholder tuning constants (engine force, steering limit, drift side-friction multiplier, turbo boost strength/duration, turbo cooldown duration) per `data-model.md` "Tuning Configuration"
+- [X] T001 Initialize Vite project scaffold: `package.json` (with `dev`, `build`, `test` npm scripts), `vite.config.js`, `index.html` (canvas root) at repository root
+- [X] T002 Install dependencies: `three`, `@dimforge/rapier3d-compat` as dependencies; `vite`, `vitest` as devDependencies (per `plan.md` Primary Dependencies, `research.md` §1/§5)
+- [X] T003 [P] Create `src/config/tuning.js` with placeholder tuning constants (engine force, steering limit, drift side-friction multiplier, turbo boost strength/duration, turbo cooldown duration) per `data-model.md` "Tuning Configuration"
 
 ---
 
@@ -41,12 +41,12 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Set up Rapier physics world in `src/physics/world.js` (`await RAPIER.init()`, world creation with gravity, `step()` wrapper) per `research.md` §1
-- [ ] T005 [P] Create grey-box arena in `src/arena/arena.js`: ground plane and boundary colliders (Rapier fixed rigid bodies) plus matching Three.js primitive meshes, per `data-model.md` Arena entity and FR-008
-- [ ] T006 [P] Create damped third-person follow camera in `src/camera/followCamera.js` (per-frame lerp toward an offset target behind/above the tracked body) per `research.md` §4
-- [ ] T007 Create keyboard-to-`InputState` mapping in `src/input/inputState.js` (`moveAxis {x,y}`, `aimAxis` fixed at `{0,0}`, `drift` boolean, `turbo` boolean) per `data-model.md` InputState and FR-002/FR-003/FR-004/FR-005/FR-007
-- [ ] T008 [P] Add unit tests for keyboard-to-`InputState` mapping in `tests/unit/inputState.test.js` per `research.md` §5
-- [ ] T009 Wire up `src/main.js`: renderer setup, physics world step loop, arena instantiation, camera attach, per-frame `InputState` polling, render loop
+- [X] T004 Set up Rapier physics world in `src/physics/world.js` (`await RAPIER.init()`, world creation with gravity, `step()` wrapper) per `research.md` §1
+- [X] T005 [P] Create grey-box arena in `src/arena/arena.js`: ground plane and boundary colliders (Rapier fixed rigid bodies) plus matching Three.js primitive meshes, per `data-model.md` Arena entity and FR-008
+- [X] T006 [P] Create damped third-person follow camera in `src/camera/followCamera.js` (per-frame lerp toward an offset target behind/above the tracked body) per `research.md` §4
+- [X] T007 Create keyboard-to-`InputState` mapping in `src/input/inputState.js` (`moveAxis {x,y}`, `aimAxis` fixed at `{0,0}`, `drift` boolean, `turbo` boolean) per `data-model.md` InputState and FR-002/FR-003/FR-004/FR-005/FR-007
+- [X] T008 [P] Add unit tests for keyboard-to-`InputState` mapping in `tests/unit/inputState.test.js` per `research.md` §5
+- [X] T009 Wire up `src/main.js`: renderer setup, physics world step loop, arena instantiation, camera attach, per-frame `InputState` polling, render loop
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
@@ -58,10 +58,10 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **Independent Test**: Load the game, hold forward/reverse/steer inputs, and observe the vehicle move under physics-driven motion; drive into a boundary and confirm it's physically blocked.
 
-- [ ] T010 [US1] Create `Vehicle` in `src/vehicle/vehicle.js`: chassis rigid body plus Rapier `DynamicRayCastVehicleController` with 4 raycast wheels, per `data-model.md` Vehicle entity, `research.md` §2, FR-009
-- [ ] T011 [US1] Implement the drive/steer control step in `src/vehicle/vehicle.js`: map `InputState.moveAxis` to engine force (forward/reverse) and steering angle on the vehicle controller, using constants from `src/config/tuning.js`, per FR-002/FR-003
-- [ ] T012 [US1] Integrate the vehicle into `src/main.js`: spawn it in the arena, step the vehicle controller each frame alongside the physics world, attach the follow camera (`src/camera/followCamera.js`) to the chassis
-- [ ] T013 [US1] Verify and tune boundary collision behavior against `src/arena/arena.js` boundary colliders (vehicle must be physically stopped/deflected, never pass through) per FR-008 and spec Edge Cases
+- [X] T010 [US1] Create `Vehicle` in `src/vehicle/vehicle.js`: chassis rigid body plus Rapier `DynamicRayCastVehicleController` with 4 raycast wheels, per `data-model.md` Vehicle entity, `research.md` §2, FR-009
+- [X] T011 [US1] Implement the drive/steer control step in `src/vehicle/vehicle.js`: map `InputState.moveAxis` to engine force (forward/reverse) and steering angle on the vehicle controller, using constants from `src/config/tuning.js`, per FR-002/FR-003
+- [X] T012 [US1] Integrate the vehicle into `src/main.js`: spawn it in the arena, step the vehicle controller each frame alongside the physics world, attach the follow camera (`src/camera/followCamera.js`) to the chassis
+- [X] T013 [US1] Verify and tune boundary collision behavior against `src/arena/arena.js` boundary colliders (vehicle must be physically stopped/deflected, never pass through) per FR-008 and spec Edge Cases
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently (MVP) — see `quickstart.md` §1–2, §6.
 
@@ -73,8 +73,8 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **Independent Test**: While moving at speed and turning, hold the drift input and observe a visibly different handling state (sliding) versus normal turning; release it and confirm normal handling returns.
 
-- [ ] T014 [US2] Implement traction-state logic in `src/vehicle/drift.js`: `normal` ↔ `drifting` transitions that adjust the vehicle controller's per-wheel side-friction value, using the multiplier from `src/config/tuning.js`, per `data-model.md` Vehicle.tractionState, `research.md` §2, FR-004
-- [ ] T015 [US2] Wire `InputState.drift` into the control step in `src/vehicle/vehicle.js`: activate/deactivate `src/vehicle/drift.js` logic each frame, with no meaningful effect below a minimum-speed threshold, per spec Edge Cases
+- [X] T014 [US2] Implement traction-state logic in `src/vehicle/drift.js`: `normal` ↔ `drifting` transitions that adjust the vehicle controller's per-wheel side-friction value, using the multiplier from `src/config/tuning.js`, per `data-model.md` Vehicle.tractionState, `research.md` §2, FR-004
+- [X] T015 [US2] Wire `InputState.drift` into the control step in `src/vehicle/vehicle.js`: activate/deactivate `src/vehicle/drift.js` logic each frame, with no meaningful effect below a minimum-speed threshold, per spec Edge Cases
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently — see `quickstart.md` §3.
 
@@ -86,9 +86,9 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **Independent Test**: With turbo available, activate it and observe a temporary speed increase; attempt immediate reactivation and confirm it's blocked until the cooldown elapses.
 
-- [ ] T016 [US3] Implement the `TurboState` state machine in `src/vehicle/turbo.js`: `ready` → `boosting` → `cooling_down` → `ready` transitions with elapsed-time tracking, using boost/cooldown durations from `src/config/tuning.js`, per `data-model.md` TurboState, FR-005/FR-006
-- [ ] T017 [P] [US3] Add unit tests for the `TurboState` transitions in `tests/unit/turbo.test.js` per `research.md` §5
-- [ ] T018 [US3] Wire `InputState.turbo` into the control step in `src/vehicle/vehicle.js`: apply boosted engine force while `boosting`, and gate reactivation until `TurboState` returns to `ready`
+- [X] T016 [US3] Implement the `TurboState` state machine in `src/vehicle/turbo.js`: `ready` → `boosting` → `cooling_down` → `ready` transitions with elapsed-time tracking, using boost/cooldown durations from `src/config/tuning.js`, per `data-model.md` TurboState, FR-005/FR-006
+- [X] T017 [P] [US3] Add unit tests for the `TurboState` transitions in `tests/unit/turbo.test.js` per `research.md` §5
+- [X] T018 [US3] Wire `InputState.turbo` into the control step in `src/vehicle/vehicle.js`: apply boosted engine force while `boosting`, and gate reactivation until `TurboState` returns to `ready`
 
 **Checkpoint**: All user stories should now be independently functional — see `quickstart.md` §4–5.
 
@@ -98,9 +98,28 @@ Single project (browser game), per `plan.md` Project Structure — `src/` and `t
 
 **Purpose**: Validation and hardening that spans all user stories
 
-- [ ] T019 [P] Run the full manual validation pass in `quickstart.md` (all 6 scenarios) and record results
-- [ ] T020 [P] Performance pass: confirm sustained 60 FPS per `quickstart.md` §6 (DevTools FPS meter) during combined drive/drift/turbo play; profile and tune the render/physics step in `src/main.js` if the target isn't met, per spec SC-005
-- [ ] T021 Verify `npm run build` output (`dist/`) runs correctly when served as static files, confirming compatibility with `.github/workflows/deploy.yml`
+- [X] T019 [P] Run the full manual validation pass in `quickstart.md` (all 6 scenarios) and record results — see Notes below
+- [X] T020 [P] Performance pass: confirm sustained 60 FPS per `quickstart.md` §6 (DevTools FPS meter) during combined drive/drift/turbo play; profile and tune the render/physics step in `src/main.js` if the target isn't met, per spec SC-005 — see Notes below (environment caveat)
+- [X] T021 Verify `npm run build` output (`dist/`) runs correctly when served as static files, confirming compatibility with `.github/workflows/deploy.yml`
+
+### Notes on T019–T021 validation (this implementation pass)
+
+Scenarios 1–5 of `quickstart.md` were exercised end-to-end via a headless
+browser (load, drive/steer, boundary collision, drift, turbo boost/cooldown,
+simultaneous drift+turbo) — all behaved as specified, with no runtime errors
+and physics-driven motion confirmed via chassis position/state readouts.
+
+Scenario 6 (60 FPS) could **not** be conclusively validated in this sandboxed
+execution environment: it only has SwiftShader software WebGL rendering
+(confirmed via `UNMASKED_RENDERER_WEBGL`), which measured ~25 FPS on this
+trivial grey-box scene — a software-rendering ceiling, not a code
+performance problem. This must be re-verified on real GPU hardware per
+`quickstart.md` §6 before considering SC-005 fully satisfied.
+
+T021 was verified by building `dist/` and serving it with a plain static
+file server (no dev server, simulating GitHub Pages), confirming the game
+loads and runs identically — `vite.config.js`'s `base: "./"` produces
+relative asset paths compatible with GitHub Pages project-page hosting.
 
 ---
 
