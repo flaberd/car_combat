@@ -123,3 +123,44 @@ done for 001's verification pass).
 **Alternatives considered**: jsdom-based simulated touch-event tests —
 rejected as brittle and not aligned with the project's existing approach to
 feel-dependent UI.
+
+## 7. Start Gate: forcing landscape when OS auto-rotate is off (added post-implementation, User Story 5)
+
+**Decision**: Add a Start button shown before any gameplay. On tap, if the
+active input mode is `touch`: call `document.documentElement.requestFullscreen()`,
+then — only if that resolves — attempt `screen.orientation.lock('landscape')`.
+Both calls are wrapped so any rejection/exception is swallowed; the game
+starts regardless of whether either succeeded. In `keyboard` mode, Start
+just starts the game — no fullscreen/orientation-lock calls are made.
+
+**Rationale**: §4 already established that `matchMedia('(orientation: ...)')`
+is a passive signal — it only reflects what the OS has actually done to the
+viewport. If a player has their OS's auto-rotate lock switched on (rotation
+disabled), the OS never reflows the browser on physical rotation, so that
+signal never changes and User Story 4's prompt can never resolve — this is
+the real gap the Start Gate closes. `screen.orientation.lock()` requires
+both a secure context and (on most browsers) fullscreen first, which is why
+fullscreen is requested first, in sequence, inside the same
+user-gesture-triggered handler (both APIs require a user gesture; chaining
+them inside one tap handler keeps both calls within that gesture window).
+Locking forces the *rendered* orientation on supporting browsers regardless
+of the OS-level rotation-lock switch — this is the actual mechanism that
+fixes the bug, not a UX nicety.
+
+**Fallback behavior**: `screen.orientation.lock()` throws/rejects on
+browsers that don't implement it — most notably iOS Safari, consistent with
+§4's original finding. On those browsers, fullscreen may still succeed
+(iOS Safari supports element Fullscreen as of recent versions) but
+orientation stays whatever the OS provides, so User Story 4's existing
+`matchMedia`-based rotate-prompt gate remains the operative fallback exactly
+as before this story — this story does not remove or replace it, only adds
+a stronger first attempt ahead of it.
+
+**Alternatives considered**: Requesting orientation lock without fullscreen
+first — rejected, most browsers reject `orientation.lock()` outside
+fullscreen (Chrome requires it; this matches §4's original research).
+Auto-requesting fullscreen/lock on page load without a Start button —
+rejected outright: both `requestFullscreen()` and `orientation.lock()`
+require an active user gesture, so a tap is structurally necessary, not
+just good practice — this also naturally satisfies FR-012 (no gameplay
+visible until Start).

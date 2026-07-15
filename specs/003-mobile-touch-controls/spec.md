@@ -76,9 +76,29 @@ As a player on a touch device, I want to be prompted to rotate to landscape if I
 
 ---
 
+### User Story 5 - Start Gate: Fullscreen and Forced Landscape (Priority: P1)
+
+As a player on a touch device, I want tapping a Start button to put the game into fullscreen and rotate it to landscape for me, so that I can actually play even though my phone's auto-rotate setting is off (the common case for many players, where physically rotating the phone alone never triggers User Story 4's rotate prompt to resolve — the browser viewport simply never reflows if the OS won't rotate the screen).
+
+**Why this priority**: Without this, User Story 4's rotate-prompt gate is a dead end for any player with auto-rotate disabled at the OS level — an extremely common setting — since the underlying orientation signal it depends on never changes no matter how the player holds their phone. This isn't a nice-to-have; it's what makes touch play actually reachable for most real players.
+
+**Independent Test**: On a touch device, load the game, see a Start button before any gameplay is visible; tap it and confirm the browser enters fullscreen and the game displays in landscape, even when the OS's rotation lock is on and the phone is physically held in portrait.
+
+**Acceptance Scenarios**:
+
+1. **Given** the game has just loaded, **When** the page finishes loading, **Then** a large, clearly visible Start button is shown and no gameplay (vehicle, arena, touch controls) is visible or interactive yet.
+2. **Given** the Start button is showing on a touch device, **When** the player taps it, **Then** the browser requests fullscreen for the game.
+3. **Given** the Start button is showing on a touch device whose browser supports programmatic orientation locking, **When** the player taps it, **Then** the display is forced to landscape regardless of the device's physical orientation or its OS-level auto-rotate setting.
+4. **Given** the Start button is showing on a touch device whose browser does NOT support programmatic orientation locking (e.g., an iOS Safari–class browser), **When** the player taps it, **Then** the game still enters fullscreen and starts, falling back to User Story 4's rotate-prompt gate for orientation (the player must physically rotate with auto-rotate enabled, as before this story).
+5. **Given** the Start button is showing on a desktop/keyboard device, **When** the player taps or clicks it, **Then** the game simply starts (fullscreen/orientation-lock behavior is touch-only; a keyboard player is never blocked by or required to use fullscreen).
+
+---
+
 ### Edge Cases
 
 - A touch-and-mouse hybrid device: a mouse click alone (no touch event) MUST NOT trigger a switch into touch mode — only an actual touch event should.
+- If fullscreen or orientation-lock is requested but the browser rejects or the player later exits fullscreen (e.g., via a system back gesture), the game MUST continue to be playable rather than getting stuck — User Story 4's rotate-prompt gate remains the fallback if the display ends up portrait after such an exit.
+- If the player's browser blocks the fullscreen/orientation-lock request entirely (permission denied, unsupported), the Start button MUST still start the game rather than getting stuck on a failed request.
 - Device orientation changing while in keyboard mode (e.g., a foldable laptop) MUST have no effect — the orientation gate only applies in touch mode (User Story 4, Scenario 3).
 - If the player is mid-drift or mid-turbo-boost when the device rotates to portrait and gameplay is blocked, the vehicle's state is preserved as-is; when gameplay resumes (rotated back to landscape) it continues from that state rather than resetting.
 - If a virtual joystick's touch is released, or interrupted (e.g., by an incoming call overlay or the touch leaving the screen), the joystick MUST return to centered/neutral output rather than getting stuck at its last dragged position.
@@ -98,9 +118,14 @@ As a player on a touch device, I want to be prompted to rotate to landscape if I
 - **FR-009**: System MUST switch the active input method at runtime if the player's actual behavior contradicts the initially detected mode (an actual touch event while in keyboard mode; a movement-bound keyboard key while in touch mode), so ambiguous/hybrid devices are not stuck with the wrong control scheme.
 - **FR-010**: The orientation gate (FR-007) MUST NOT apply while keyboard mode is active, regardless of browser window aspect ratio.
 - **FR-011**: A released or interrupted virtual joystick touch MUST return that joystick to centered/neutral output.
+- **FR-012**: System MUST show a Start button before any gameplay begins, with no vehicle, arena interaction, or touch controls visible or active until it is tapped/clicked.
+- **FR-013**: On touch devices, tapping the Start button MUST request fullscreen and MUST attempt to programmatically lock screen orientation to landscape; the game MUST start regardless of whether either request succeeds (Edge Cases: never block startup on a failed or unsupported request).
+- **FR-014**: On devices where programmatic orientation locking is unsupported or fails, the existing landscape-only orientation gate (FR-007/FR-008) remains the fallback mechanism after Start is tapped.
+- **FR-015**: On keyboard/desktop devices, tapping/clicking the Start button MUST simply start the game — fullscreen and orientation-lock requests are touch-only (FR-013 does not apply).
 
 ### Key Entities
 
+- **Start Gate**: A pre-gameplay screen with a Start button; tracks whether the player has started the game yet. On touch devices, starting it triggers the fullscreen/orientation-lock attempt (FR-012–FR-015).
 - **Input Method**: The currently active control mode (`touch` or `keyboard`), set by FR-001 and updated by FR-009.
 - **Virtual Joystick**: An on-screen touch control tracking its touch origin and current drag offset, producing a normalized axis output; used for both the left (bound) and right (unbound) joysticks.
 - **Touch Button** (Drift / Turbo): An on-screen tappable control tracking its pressed state, feeding `InputState.drift`/`InputState.turbo`.
@@ -115,8 +140,11 @@ As a player on a touch device, I want to be prompted to rotate to landscape if I
 - **SC-003**: A player holding a touch device in portrait sees a rotate-to-landscape prompt instead of the game, and gameplay begins automatically within 1 second of rotating to landscape.
 - **SC-004**: Touch-driven drift and turbo produce the same observable vehicle behavior as their keyboard equivalents.
 - **SC-005**: A real input action that contradicts the currently active control scheme (e.g., touching the screen while in keyboard mode) results in the control scheme switching to match within a single interaction, with no page reload.
+- **SC-006**: A player on a touch device with the OS auto-rotate setting turned off (physically rotating the phone has no effect on the browser viewport) can still reach a playable landscape layout by tapping Start, on any browser that supports programmatic orientation locking.
 
 ## Assumptions
+
+- **Why a Start Gate is needed (not just User Story 4 alone)**: User Story 4's rotate-prompt gate depends on `matchMedia('(orientation: ...)')`, which only changes when the OS actually reflows the browser viewport on rotation. Many players keep their OS-level auto-rotate lock switched on (screen rotation disabled) — a very common device setting — in which case physically rotating the phone produces no viewport change at all, and User Story 4's prompt can never resolve no matter what the player does. User Story 5's Start button exists specifically to work around this: fullscreen + programmatic orientation lock, triggered from a genuine user gesture (tapping Start), can force landscape on supporting browsers regardless of the OS auto-rotate setting. Where that's unsupported (notably iOS Safari–class browsers), User Story 4 remains the fallback and still requires the player to have auto-rotate enabled — a known, accepted limitation on those browsers.
 
 - **Touch vs. keyboard detection default**: detection uses the combination of the CSS `pointer: coarse` and `hover: none` media features to identify the device's *primary* input mechanism, not merely whether touch is supported. This correctly defaults a touchscreen laptop (whose primary pointer is typically its trackpad, reported as fine + hover-capable) to keyboard mode, and a tablet (whose primary pointer remains touch even with a paired keyboard) to touch mode — matching how most people actually hold and use each device type. FR-009's runtime override handles any remaining cases where this default doesn't match actual play behavior, without requiring a settings screen.
 - "Landscape" is determined by comparing viewport width to height (or the Screen Orientation API where available) — not a hardcoded device/model list.

@@ -222,3 +222,38 @@ Task: "Create src/input/touchInput.js instantiating left/right VirtualJoysticks"
 - No contract tests: this feature has no external interface (`plan.md` — `contracts/` skipped)
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
+
+---
+
+## Phase 8: User Story 5 - Start Gate: Fullscreen and Forced Landscape (Priority: P1) [AMENDMENT]
+
+**Added post-implementation**: real-world testing found that User Story 4's
+orientation gate depends on `matchMedia`, which never fires if the player's
+OS has auto-rotate locked (screen rotation disabled) — a very common
+setting. This phase adds a Start button that, on a genuine tap (the user
+gesture both `requestFullscreen()` and `screen.orientation.lock()` require),
+forces fullscreen + landscape on supporting browsers regardless of the OS
+rotation-lock switch. See `research.md` §7, `data-model.md` StartGate,
+spec.md User Story 5 / FR-012–FR-015 / SC-006.
+
+**Goal**: No gameplay is visible/interactive until Start is tapped; tapping
+it on a touch device requests fullscreen and attempts to force landscape;
+on keyboard it just starts the game.
+
+**Independent Test**: Load the game, confirm only a Start button is
+visible; tap/click it and confirm gameplay begins (plus fullscreen +
+landscape on a touch device where the browser supports locking).
+
+- [ ] T021 [US5] Add a Start button/overlay to `index.html` (`src/ui/touchControls.css` or a new stylesheet section) that covers the whole screen, hides the canvas/touch-controls behind it, and is removed/hidden once tapped
+- [ ] T022 [US5] Create `src/input/startGate.js`: `StartGate` per data-model.md — `started` state, one-way `false -> true` transition; exposes `start()` that, when called with `mode === 'touch'`, attempts `document.documentElement.requestFullscreen()` then (only on success) `screen.orientation.lock('landscape')`, swallowing any rejection/exception from either (FR-013); no-ops those calls when `mode === 'keyboard'` (FR-015)
+- [ ] T023 [US5] Wire `src/main.js`: do not start the render/physics loop until `StartGate.started` is true; the Start button's click handler calls `startGate.start(inputController.getMode())` then begins the loop, per FR-012
+- [ ] T024 [P] [US5] Update `specs/003-mobile-touch-controls/quickstart.md` with a "Scenario 0: Start Gate" step (tap Start before any other scenario can be exercised) and note the touch-only fullscreen/lock behavior
+
+**Checkpoint**: Start Gate functional — see `quickstart.md` Scenario 0. Re-run Scenarios 1–6 to confirm they still work with the Start Gate in front of them.
+
+---
+
+## Phase 9: Polish (Amendment)
+
+- [ ] T025 [P] Re-run the full `quickstart.md` pass (Scenario 0 plus the original 6) confirming nothing regressed by adding the Start Gate in front of existing flows
+- [ ] T026 [P] Headless-browser verification of the Start button's fullscreen/orientation-lock attempt and its graceful no-op fallback, acknowledging that headless Chromium has limited/no real Fullscreen API support — document what could and couldn't be verified this way, same honesty standard as the 60 FPS caveat from 001/003

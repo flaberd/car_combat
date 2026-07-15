@@ -29,6 +29,18 @@
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into specification
 
+## Amendment (post-implementation)
+
+- Added User Story 5 (Start Gate: Fullscreen and Forced Landscape, P1),
+  FR-012–FR-015, SC-006, a Start Gate key entity, and an Assumptions entry
+  explaining why User Story 4 alone is insufficient (OS auto-rotate lock is
+  commonly disabled, so the viewport-based orientation signal never
+  changes). All new items pass the same Content Quality / Requirement
+  Completeness / Feature Readiness checks as the original spec — no new
+  [NEEDS CLARIFICATION] markers, all acceptance scenarios and edge cases
+  defined, scope bounded (touch-only; desktop explicitly unaffected per
+  FR-015).
+
 ## Notes
 
 - The ambiguous-device detection question (touchscreen laptop / tablet with
