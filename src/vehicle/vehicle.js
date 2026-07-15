@@ -117,6 +117,13 @@ export function createVehicle(world, scene, archetype, options = {}) {
     // Set by src/combat/oilSlick.js while overlapping an oil-slick segment
     // (research.md §6); 1 = no effect.
     oilSlickMultiplier: 1,
+    // Chassis speed snapshotted each physics substep, right after the
+    // vehicle controller sets it and before world.step() resolves any
+    // collision impulse — ramming.js reads this instead of live linvel so
+    // ram damage reflects the vehicle's own approach speed, not velocity
+    // the collision response itself just imparted (002-combat-system).
+    approachSpeed: 0,
+    ramCooldownRemaining: 0,
   };
   vehicle.syncMesh = () => syncMesh(vehicle);
 
@@ -154,8 +161,13 @@ export function computeSteerAngle(archetype, moveAxisX) {
  * snagging the vehicle at that spot.
  */
 export function stepVehicleControl(vehicle, inputState, dt) {
+  if (vehicle.ramCooldownRemaining > 0) {
+    vehicle.ramCooldownRemaining = Math.max(0, vehicle.ramCooldownRemaining - dt);
+  }
+
   if (vehicle.eliminated) {
     vehicle.controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
+    snapshotApproachSpeed(vehicle);
     return;
   }
 
@@ -189,6 +201,12 @@ export function stepVehicleControl(vehicle, inputState, dt) {
 
   controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
   clampToMaxSpeed(vehicle);
+  snapshotApproachSpeed(vehicle);
+}
+
+function snapshotApproachSpeed(vehicle) {
+  const linvel = vehicle.chassisBody.linvel();
+  vehicle.approachSpeed = Math.hypot(linvel.x, linvel.y, linvel.z);
 }
 
 /**
