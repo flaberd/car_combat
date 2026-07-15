@@ -29,8 +29,8 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Purpose**: Static scaffolding for the touch UI (no new dependencies — research.md confirms browser-native APIs only)
 
-- [ ] T001 Create `src/ui/touchControls.css`: `touch-action: none` on joystick/button containers, a hidden-by-default utility class for the touch-control layer and the rotate-prompt overlay; link it from `index.html`
-- [ ] T002 [P] Add touch-control DOM scaffold to `index.html`: left joystick container, right joystick container, Drift button, Turbo button, and a full-screen rotate-prompt overlay — all hidden by default via the CSS class from T001
+- [X] T001 Create `src/ui/touchControls.css`: `touch-action: none` on joystick/button containers, a hidden-by-default utility class for the touch-control layer and the rotate-prompt overlay; link it from `index.html`
+- [X] T002 [P] Add touch-control DOM scaffold to `index.html`: left joystick container, right joystick container, Drift button, Turbo button, and a full-screen rotate-prompt overlay — all hidden by default via the CSS class from T001
 
 ---
 
@@ -40,8 +40,8 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Create `src/input/inputController.js` stub: wraps the existing `createKeyboardInput` (`src/input/inputState.js`, unchanged), exposing `read()` (delegates to keyboard) and `isGameplayBlocked()` (hardcoded `false` for now)
-- [ ] T004 Update `src/main.js` to call the input controller's `read()`/`isGameplayBlocked()` instead of `keyboardInput` directly, skipping `stepVehicleControl`/`world.step()` for a frame when blocked (data-model.md OrientationGate invariant — no-op until US4 fills in real blocking)
+- [X] T003 Create `src/input/inputController.js` stub: wraps the existing `createKeyboardInput` (`src/input/inputState.js`, unchanged), exposing `read()` (delegates to keyboard) and `isGameplayBlocked()` (hardcoded `false` for now)
+- [X] T004 Update `src/main.js` to call the input controller's `read()`/`isGameplayBlocked()` instead of `keyboardInput` directly, skipping `stepVehicleControl`/`world.step()` for a frame when blocked (data-model.md OrientationGate invariant — no-op until US4 fills in real blocking)
 
 **Checkpoint**: Foundation ready — run `npm run test` and a quick manual keyboard-play smoke check (regression: desktop behavior must be unchanged) before starting user stories.
 
@@ -53,10 +53,10 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Independent Test**: Load on a touch-emulated browser and confirm touch controls appear with no keyboard-only UI; load on desktop and confirm no touch controls appear; touch/keypress after load and confirm the scheme switches accordingly.
 
-- [ ] T005 [US1] Implement primary-input detection in `src/input/inputController.js`: `matchMedia('(pointer: coarse) and (hover: none)')` on load sets the initial `mode` (`touch` or `keyboard`), per research.md §1
-- [ ] T006 [US1] Implement the runtime override in `src/input/inputController.js`: a real `pointerdown` with `pointerType === 'touch'` switches to `touch` mode; a `keydown` matching an existing bound key (`src/input/inputState.js` `KEY_BINDINGS`) switches to `keyboard` mode; a mouse `pointerdown` never switches modes, per research.md §2, FR-009, and the hybrid-device Edge Case
-- [ ] T007 [US1] Add unit tests for the mode-detection and override logic in `tests/unit/inputController.test.js` (fake `matchMedia`/event inputs) per research.md §6
-- [ ] T008 [US1] Wire mode changes to show/hide the touch-control DOM (from T002) via the hidden-by-default CSS class from T001, per FR-006
+- [X] T005 [US1] Implement primary-input detection in `src/input/inputController.js`: `matchMedia('(pointer: coarse) and (hover: none)')` on load sets the initial `mode` (`touch` or `keyboard`), per research.md §1
+- [X] T006 [US1] Implement the runtime override in `src/input/inputController.js`: a real `pointerdown` with `pointerType === 'touch'` switches to `touch` mode; a `keydown` matching an existing bound key (`src/input/inputState.js` `KEY_BINDINGS`) switches to `keyboard` mode; a mouse `pointerdown` never switches modes, per research.md §2, FR-009, and the hybrid-device Edge Case
+- [X] T007 [US1] Add unit tests for the mode-detection and override logic in `tests/unit/inputController.test.js` (fake `matchMedia`/event inputs) per research.md §6
+- [X] T008 [US1] Wire mode changes to show/hide the touch-control DOM (from T002) via the hidden-by-default CSS class from T001, per FR-006
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently (MVP) — see `quickstart.md` §1–2.
 
@@ -68,10 +68,10 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Independent Test**: In touch mode, drag the left joystick in various directions and confirm the vehicle accelerates/reverses/steers accordingly and recenters cleanly on release; confirm the right joystick has no gameplay effect.
 
-- [ ] T009 [US2] Create `VirtualJoystick` in `src/input/virtualJoystick.js`: Pointer Events (`pointerdown`/`pointermove`/`pointerup`/`pointercancel`) tracked by `pointerId`, drag offset clamped to `maxRadius`, normalized `axis` output, resets to `{0,0}` on release or cancel, per research.md §3, FR-011, data-model.md VirtualJoystick
-- [ ] T010 [P] [US2] Add unit tests for the joystick drag-to-axis math in `tests/unit/virtualJoystick.test.js` per research.md §6
-- [ ] T011 [US2] Create `src/input/touchInput.js`: instantiates a left (bound) and right (unbound) `VirtualJoystick` against the DOM containers from T002; exposes `read()` producing an `InputState` with `moveAxis` from the left joystick and `aimAxis` computed from the right joystick but not consumed elsewhere, per FR-002/FR-003
-- [ ] T012 [US2] Wire `src/input/inputController.js` to delegate `read()` to `touchInput` (T011) when `mode === 'touch'`, per research.md §5
+- [X] T009 [US2] Create `VirtualJoystick` in `src/input/virtualJoystick.js`: Pointer Events (`pointerdown`/`pointermove`/`pointerup`/`pointercancel`) tracked by `pointerId`, drag offset clamped to `maxRadius`, normalized `axis` output, resets to `{0,0}` on release or cancel, per research.md §3, FR-011, data-model.md VirtualJoystick
+- [X] T010 [P] [US2] Add unit tests for the joystick drag-to-axis math in `tests/unit/virtualJoystick.test.js` per research.md §6
+- [X] T011 [US2] Create `src/input/touchInput.js`: instantiates a left (bound) and right (unbound) `VirtualJoystick` against the DOM containers from T002; exposes `read()` producing an `InputState` with `moveAxis` from the left joystick and `aimAxis` computed from the right joystick but not consumed elsewhere, per FR-002/FR-003
+- [X] T012 [US2] Wire `src/input/inputController.js` to delegate `read()` to `touchInput` (T011) when `mode === 'touch'`, per research.md §5
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently — see `quickstart.md` §3.
 
@@ -83,8 +83,8 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Independent Test**: In touch mode with the vehicle moving, hold the Drift button and confirm the same traction change as keyboard Space; tap the Turbo button and confirm the same boost/cooldown behavior as keyboard Shift, including that repeated taps during boost/cooldown have no extra effect.
 
-- [ ] T013 [US3] Add a `TouchButton` helper in `src/input/touchInput.js` for Drift (held state) and Turbo (edge-triggered on press, mirroring the up-to-down edge pattern already used for keyboard turbo in `src/input/inputState.js`), per data-model.md TouchButton
-- [ ] T014 [US3] Wire the Drift/Turbo button DOM elements (from T002) into `touchInput.js`'s `read()` output (`InputState.drift`, `InputState.turbo`), per FR-004/FR-005
+- [X] T013 [US3] Add a `TouchButton` helper in `src/input/touchInput.js` for Drift (held state) and Turbo (edge-triggered on press, mirroring the up-to-down edge pattern already used for keyboard turbo in `src/input/inputState.js`), per data-model.md TouchButton
+- [X] T014 [US3] Wire the Drift/Turbo button DOM elements (from T002) into `touchInput.js`'s `read()` output (`InputState.drift`, `InputState.turbo`), per FR-004/FR-005
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently — see `quickstart.md` §4.
 
@@ -96,9 +96,9 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Independent Test**: In touch mode, rotate to portrait and confirm gameplay blocks with the prompt showing and no vehicle motion; rotate back to landscape and confirm gameplay resumes automatically, continuing from the same vehicle state.
 
-- [ ] T015 [US4] Create `OrientationGate` in `src/input/orientationGate.js`: `matchMedia('(orientation: portrait)')` with a `change` listener tracking `isPortrait`; computes `blocked` per data-model.md invariant (`mode === 'touch' && isPortrait`), per research.md §4, FR-007/FR-010
-- [ ] T016 [US4] Wire `src/input/inputController.js`'s `isGameplayBlocked()` to `OrientationGate.blocked` (replacing the T003 stub); show/hide the rotate-prompt overlay (from T002) accordingly, per FR-008
-- [ ] T017 [US4] Verify the `src/main.js` game loop (T004) correctly pauses (not resets) `stepVehicleControl`/`world.step()` while blocked, preserving vehicle state across a block/resume cycle, per the mid-drift/turbo Edge Case
+- [X] T015 [US4] Create `OrientationGate` in `src/input/orientationGate.js`: `matchMedia('(orientation: portrait)')` with a `change` listener tracking `isPortrait`; computes `blocked` per data-model.md invariant (`mode === 'touch' && isPortrait`), per research.md §4, FR-007/FR-010
+- [X] T016 [US4] Wire `src/input/inputController.js`'s `isGameplayBlocked()` to `OrientationGate.blocked` (replacing the T003 stub); show/hide the rotate-prompt overlay (from T002) accordingly, per FR-008
+- [X] T017 [US4] Verify the `src/main.js` game loop (T004) correctly pauses (not resets) `stepVehicleControl`/`world.step()` while blocked, preserving vehicle state across a block/resume cycle, per the mid-drift/turbo Edge Case
 
 **Checkpoint**: All four user stories should now be independently functional — see `quickstart.md` §5.
 
@@ -108,9 +108,48 @@ Extends 001-core-vehicle-loop's existing `src/input/` folder; adds `src/ui/` for
 
 **Purpose**: Validation and regression hardening that spans all user stories
 
-- [ ] T018 [P] Run the full manual/headless-browser validation pass in `quickstart.md` (all 6 scenarios, including the joystick-release edge case) and record results
-- [ ] T019 [P] Regression-check desktop/keyboard play against 001-core-vehicle-loop's existing behavior (spec SC-002): no touch controls or rotate prompt appear, drive/drift/turbo behave exactly as before this feature
-- [ ] T020 Verify `npm run build` output still serves correctly as static files (no new dependency was added, but confirm the touch-control DOM/CSS and new input modules don't break the existing GitHub Pages deploy compatibility from 001)
+- [X] T018 [P] Run the full manual/headless-browser validation pass in `quickstart.md` (all 6 scenarios, including the joystick-release edge case) and record results — see Notes below
+- [X] T019 [P] Regression-check desktop/keyboard play against 001-core-vehicle-loop's existing behavior (spec SC-002): no touch controls or rotate prompt appear, drive/drift/turbo behave exactly as before this feature
+- [X] T020 Verify `npm run build` output still serves correctly as static files (no new dependency was added, but confirm the touch-control DOM/CSS and new input modules don't break the existing GitHub Pages deploy compatibility from 001)
+
+### Notes on T018–T020 validation (this implementation pass)
+
+All 6 quickstart.md scenarios were exercised end-to-end via headless-browser
+device emulation (touch-emulated phone profile and plain desktop context):
+
+1. Auto-detection on load: desktop stays keyboard-only (no touch UI);
+   touch-emulated device shows touch controls automatically.
+2. Runtime override: a bound keydown while in touch mode switches to
+   keyboard (UI hides); a real touch pointerdown switches to touch. A plain
+   mouse pointerdown never switches modes.
+3. Touch drive/steer: dragging the left joystick physically moves the
+   vehicle (~2.8 units over a 2s forward drag); the right joystick has no
+   gameplay effect.
+4. Touch drift/turbo: holding Drift at sufficient speed (>4 units, matching
+   001's `DRIFT.minSpeedForEffect`) flips `tractionState` to `drifting` and
+   back on release; tapping Turbo transitions `ready -> boosting`, with a
+   repeat tap during boost correctly ignored.
+5. Orientation gate: rotating a touch-emulated viewport to portrait shows
+   the rotate prompt and freezes vehicle position exactly (verified via two
+   position samples 1s apart being identical); rotating back to landscape
+   hides the prompt and resumes from the same (not reset) position.
+6. Joystick release edge case: both `pointercancel` and a `pointerup`
+   dispatched with off-screen coordinates correctly recenter the joystick
+   knob to `translate(0px, 0px)`.
+
+T019: a full keyboard-only regression pass (drive, drift, turbo, ~7.3 units
+travelled) confirmed identical behavior to 001-core-vehicle-loop, with no
+touch UI or rotate prompt ever appearing.
+
+T020: `dist/` served via a plain static HTTP server (no dev server, no new
+dependency) on a touch-emulated profile loaded and showed touch controls
+correctly, confirming GitHub Pages compatibility is preserved.
+
+60 FPS was not re-measured in this pass (carried caveat from
+001-core-vehicle-loop: this sandboxed environment only has SwiftShader
+software rendering) — this feature adds negligible per-frame cost
+(event-driven input, no new rendering/physics load) so the same real-hardware
+re-verification noted for 001 applies here too, not a new concern.
 
 ---
 

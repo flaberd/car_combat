@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { createPhysicsWorld, FIXED_TIMESTEP } from "./physics/world.js";
 import { createArena } from "./arena/arena.js";
 import { createFollowCamera } from "./camera/followCamera.js";
-import { createKeyboardInput } from "./input/inputState.js";
+import { createInputController } from "./input/inputController.js";
 import { createVehicle, stepVehicleControl } from "./vehicle/vehicle.js";
 
 async function main() {
@@ -31,7 +31,16 @@ async function main() {
   createArena(world, scene);
   const vehicle = createVehicle(world, scene);
 
-  const keyboardInput = createKeyboardInput(window);
+  const touchControlsEl = document.getElementById("touch-controls");
+  const rotatePromptEl = document.getElementById("rotate-prompt");
+  const inputController = createInputController(window, {
+    onModeChange: (mode) => {
+      touchControlsEl.classList.toggle("hidden", mode !== "touch");
+    },
+    onBlockedChange: (blocked) => {
+      rotatePromptEl.classList.toggle("hidden", !blocked);
+    },
+  });
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -48,17 +57,19 @@ async function main() {
     const frameDelta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
 
-    const inputState = keyboardInput.read();
+    if (!inputController.isGameplayBlocked()) {
+      const inputState = inputController.read();
 
-    physicsAccumulator += frameDelta;
-    while (physicsAccumulator >= FIXED_TIMESTEP) {
-      stepVehicleControl(vehicle, inputState, FIXED_TIMESTEP);
-      world.step();
-      physicsAccumulator -= FIXED_TIMESTEP;
+      physicsAccumulator += frameDelta;
+      while (physicsAccumulator >= FIXED_TIMESTEP) {
+        stepVehicleControl(vehicle, inputState, FIXED_TIMESTEP);
+        world.step();
+        physicsAccumulator -= FIXED_TIMESTEP;
+      }
+
+      vehicle.syncMesh();
+      followCamera.update(frameDelta, vehicle.mesh.position, vehicle.mesh.quaternion);
     }
-
-    vehicle.syncMesh();
-    followCamera.update(frameDelta, vehicle.mesh.position, vehicle.mesh.quaternion);
 
     renderer.render(scene, camera);
   }

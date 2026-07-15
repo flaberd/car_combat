@@ -1,0 +1,91 @@
+/* Touch control layer (003-mobile-touch-controls). Hidden by default;
+   shown/hidden at runtime by inputController.js based on detected mode. */
+
+.hidden {
+  display: none !important;
+}
+
+#touch-controls {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.joystick {
+  position: absolute;
+  bottom: 32px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  touch-action: none;
+  pointer-events: auto;
+}
+
+#joystick-left {
+  left: 32px;
+}
+
+#joystick-right {
+  right: 32px;
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.touch-button {
+  position: absolute;
+  bottom: 170px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  font: 600 13px/1 system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+#touch-button-turbo {
+  right: 48px;
+}
+
+#touch-button-drift {
+  right: 140px;
+}
+
+.touch-button.pressed {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+#rotate-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background: #111;
+  color: #fff;
+  font: 500 18px/1.4 system-ui, sans-serif;
+}

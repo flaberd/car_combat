@@ -16,6 +16,13 @@ function isAnyDown(keysDown, codes) {
   return codes.some((code) => keysDown.has(code));
 }
 
+const ALL_BOUND_KEY_CODES = new Set(Object.values(KEY_BINDINGS).flat());
+
+/** True if `code` is one of the movement/drift/turbo key bindings above. */
+export function isBoundKeyCode(code) {
+  return ALL_BOUND_KEY_CODES.has(code);
+}
+
 /**
  * Pure mapping from a set of currently-held key codes to this frame's
  * InputState. `turbo` is edge-triggered (true only on the frame the turbo
