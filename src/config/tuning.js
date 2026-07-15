@@ -68,6 +68,11 @@ export const CAMERA = {
 // the OTHER vehicle = this vehicle's own speed * mass * k, symmetric.
 export const RAM = {
   k: 0.01,
+  // Per-vehicle debounce after taking ram damage: a single sustained ram
+  // can make Rapier re-fire a "contact started" event several times as the
+  // bodies jitter against each other, so this stops that from being
+  // counted as repeated separate rams (src/combat/ramming.js).
+  cooldown: 1,
 };
 
 export const WEAPONS = {
