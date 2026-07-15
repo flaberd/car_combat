@@ -84,3 +84,35 @@ is `touch` (FR-010).
   and `world.step()` for that frame (pause, not reset) — vehicle/physics
   state is simply left untouched until `blocked` returns to `false` (Edge
   Cases: mid-drift/turbo state is preserved across a block/resume cycle).
+
+## StartGate (added post-implementation, User Story 5)
+
+Tracks whether the player has started the game yet (spec Key Entities:
+Start Gate). Gates the entire game loop, not just physics/input like
+`OrientationGate` — nothing runs (no rendering loop, no `InputController`
+event listeners driving gameplay) until `started` is `true`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `started` | boolean | `false` until the Start button is tapped/clicked; never returns to `false` afterward within a session. |
+
+**State transitions**:
+
+```text
+false --(Start button tap/click)--> true
+```
+
+No transition back to `false` exists — this is a one-time gate per page
+load, not a pause/resume mechanism (unlike `OrientationGate.blocked`,
+which can toggle repeatedly).
+
+**Behavior on the `false` -> `true` transition** (research.md §7):
+- If `InputMethod.mode === 'touch'`: attempt `requestFullscreen()`, then
+  (only if that succeeds) attempt `screen.orientation.lock('landscape')`.
+  Both attempts are best-effort — failure of either MUST NOT prevent the
+  transition to `started = true` (FR-013).
+- If `InputMethod.mode === 'keyboard'`: no fullscreen/orientation-lock
+  calls are made (FR-015); the transition just starts the game.
+- After this transition, `OrientationGate` (above) continues to operate
+  exactly as before — it is the fallback for browsers where the lock
+  attempt was unsupported or failed (FR-014).
