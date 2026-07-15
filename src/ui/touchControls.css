@@ -30,10 +30,6 @@
   left: 32px;
 }
 
-#joystick-right {
-  right: 32px;
-}
-
 .joystick-knob {
   position: absolute;
   top: 50%;
@@ -73,11 +69,13 @@
 }
 
 #touch-button-fire {
-  left: 48px;
+  right: 48px;
+  bottom: 32px;
 }
 
 #touch-button-use {
-  left: 140px;
+  right: 140px;
+  bottom: 32px;
 }
 
 .touch-button.pressed {
