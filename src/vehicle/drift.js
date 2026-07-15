@@ -13,11 +13,23 @@ export function computeTractionState(driftInputHeld, currentSpeed) {
   return "normal";
 }
 
-export function applyTractionState(controller, wheelCount, tractionState) {
-  const sideFriction =
+/**
+ * `extraFrictionMultiplier` (default 1, no effect) lets other systems —
+ * currently 002-combat-system's oil slick — further scale the chosen
+ * friction value without inventing a parallel friction mechanism
+ * (research.md §6).
+ */
+export function applyTractionState(
+  controller,
+  wheelCount,
+  tractionState,
+  extraFrictionMultiplier = 1,
+) {
+  const baseFriction =
     tractionState === "drifting"
       ? DRIFT.driftSideFriction
       : DRIFT.normalSideFriction;
+  const sideFriction = baseFriction * extraFrictionMultiplier;
   for (let i = 0; i < wheelCount; i++) {
     controller.setWheelSideFrictionStiffness(i, sideFriction);
   }
