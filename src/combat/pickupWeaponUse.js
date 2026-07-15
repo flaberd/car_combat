@@ -6,15 +6,36 @@ import { deployOilSlick } from "./oilSlick.js";
 
 const _forward = new THREE.Vector3();
 
-function consumeAmmo(vehicle, slot) {
+function consumeAmmo(vehicle) {
+  const slot = vehicle.weaponSlots[vehicle.selectedWeaponIndex];
   slot.ammo -= 1;
   if (slot.ammo <= 0) {
-    vehicle.pickupWeapon = null;
+    vehicle.weaponSlots.splice(vehicle.selectedWeaponIndex, 1);
+    if (vehicle.selectedWeaponIndex >= vehicle.weaponSlots.length) {
+      vehicle.selectedWeaponIndex = Math.max(0, vehicle.weaponSlots.length - 1);
+    }
   }
 }
 
 /**
- * Dispatches `InputState.usePickup` to the vehicle's active pickup weapon
+ * Cycles the vehicle's selected weapon slot by `direction` (+1 next, -1
+ * previous), wrapping around. No-op with an empty inventory. Cancels any
+ * in-progress homing-rocket lock on the slot being switched away from,
+ * since its hold-to-lock state no longer applies once it's not selected.
+ */
+export function switchWeapon(vehicle, direction) {
+  const slots = vehicle.weaponSlots;
+  if (slots.length === 0) return;
+
+  const currentSlot = slots[vehicle.selectedWeaponIndex];
+  if (currentSlot?.lockState) currentSlot.lockState = null;
+
+  vehicle.selectedWeaponIndex =
+    (vehicle.selectedWeaponIndex + direction + slots.length) % slots.length;
+}
+
+/**
+ * Dispatches `InputState.usePickup` to the vehicle's selected weapon slot
  * (data-model.md PickupWeaponSlot, FR-009/FR-010/FR-011/FR-012, spec
  * "Weapon fire input" research.md §9). Rockets/mines/oil slick fire on the
  * rising edge; homing rockets accumulate lock progress while held and
@@ -31,7 +52,7 @@ export function updatePickupWeaponUse(
   dt,
   collections,
 ) {
-  const slot = vehicle.pickupWeapon;
+  const slot = vehicle.weaponSlots[vehicle.selectedWeaponIndex] ?? null;
   const wasHeld = vehicle.previousUsePickup;
   vehicle.previousUsePickup = inputState.usePickup;
 
@@ -61,7 +82,7 @@ export function updatePickupWeaponUse(
         ),
       );
       slot.lockState = null;
-      consumeAmmo(vehicle, slot);
+      consumeAmmo(vehicle);
     }
     return;
   }
@@ -79,7 +100,7 @@ export function updatePickupWeaponUse(
         vehicle,
       ),
     );
-    consumeAmmo(vehicle, slot);
+    consumeAmmo(vehicle);
   } else if (slot.type === "mines") {
     const behind = {
       x: origin.x - _forward.x * 2,
@@ -87,7 +108,7 @@ export function updatePickupWeaponUse(
       z: origin.z - _forward.z * 2,
     };
     collections.mines.push(createMine(world, scene, behind));
-    consumeAmmo(vehicle, slot);
+    consumeAmmo(vehicle);
   } else if (slot.type === "oilSlick") {
     collections.oilSegments.push(
       ...deployOilSlick(
@@ -98,6 +119,6 @@ export function updatePickupWeaponUse(
         vehicle,
       ),
     );
-    consumeAmmo(vehicle, slot);
+    consumeAmmo(vehicle);
   }
 }

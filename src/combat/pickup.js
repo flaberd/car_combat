@@ -75,8 +75,12 @@ export function updatePickup(pickup, dt) {
 
 /**
  * Collision-event handler: on contact with an available pickup, grants its
- * weapon to the touching vehicle (replacing any previously held pickup
- * weapon, FR-007) and starts the respawn timer.
+ * weapon to the touching vehicle's inventory (data-model.md
+ * Vehicle.weaponSlots) and starts the respawn timer. A vehicle can carry
+ * one slot per weapon type at once — collecting a type already held tops
+ * its ammo back up to full rather than stacking; collecting a new type
+ * adds a slot and selects it, so picking up a weapon always makes it the
+ * active one.
  */
 export function handlePickupCollision(handle1, handle2, started) {
   if (!started) return;
@@ -89,7 +93,16 @@ export function handlePickupCollision(handle1, handle2, started) {
   const vehicle = getVehicleByColliderHandle(otherHandle);
   if (!vehicle || vehicle.eliminated) return;
 
-  vehicle.pickupWeapon = createPickupWeaponSlot(pickup.weaponType);
+  const existingIndex = vehicle.weaponSlots.findIndex(
+    (slot) => slot.type === pickup.weaponType,
+  );
+  if (existingIndex >= 0) {
+    vehicle.weaponSlots[existingIndex].ammo = ammoForWeaponType(pickup.weaponType);
+    vehicle.selectedWeaponIndex = existingIndex;
+  } else {
+    vehicle.weaponSlots.push(createPickupWeaponSlot(pickup.weaponType));
+    vehicle.selectedWeaponIndex = vehicle.weaponSlots.length - 1;
+  }
 
   pickup.available = false;
   pickup.respawnRemaining = PICKUPS.respawnDelay;

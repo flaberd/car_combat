@@ -60,7 +60,13 @@ export function createProjectile(scene, kind, origin, directionXZ, ownerVehicle,
   };
 }
 
-/** Advances a projectile one physics step, homing (if applicable) and hit-testing via raycast. */
+/**
+ * Advances a projectile one physics step, homing (if applicable) and
+ * hit-testing via raycast. The raycast excludes sensor colliders
+ * (pickups/mines/oil-slick segments) so a projectile fired near one
+ * doesn't fizzle against it instead of the vehicle behind it — same fix
+ * as the vehicle wheel raycast in src/vehicle/vehicle.js.
+ */
 export function updateProjectile(world, scene, projectile, dt) {
   if (projectile.dead) return;
 
@@ -94,7 +100,7 @@ export function updateProjectile(world, scene, projectile, dt) {
       ray,
       1,
       true,
-      undefined,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
       undefined,
       undefined,
       projectile.ownerVehicle.chassisBody,

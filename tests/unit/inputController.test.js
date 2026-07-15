@@ -37,7 +37,7 @@ describe("decideOverride", () => {
   });
 
   it("does NOT switch touch -> keyboard on an unbound keydown", () => {
-    const next = decideOverride("touch", { type: "keydown", code: "KeyQ" });
+    const next = decideOverride("touch", { type: "keydown", code: "KeyZ" });
     expect(next).toBe("touch");
   });
 

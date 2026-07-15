@@ -79,6 +79,12 @@ export function createTouchInput(document) {
   const useButton = createTouchButton(
     document.getElementById("touch-button-use"),
   );
+  const switchPrevButton = createTouchButton(
+    document.getElementById("touch-button-switch-prev"),
+  );
+  const switchNextButton = createTouchButton(
+    document.getElementById("touch-button-switch-next"),
+  );
 
   return {
     leftJoystick,
@@ -86,6 +92,8 @@ export function createTouchInput(document) {
     turboButton,
     fireButton,
     useButton,
+    switchPrevButton,
+    switchNextButton,
     read() {
       return {
         moveAxis: { x: leftJoystick.axis.x, y: leftJoystick.axis.y },
@@ -94,6 +102,8 @@ export function createTouchInput(document) {
         turbo: turboButton.consumeEdge(),
         fire: fireButton.pressed,
         usePickup: useButton.pressed,
+        switchWeaponPrev: switchPrevButton.consumeEdge(),
+        switchWeaponNext: switchNextButton.consumeEdge(),
       };
     },
     dispose() {
@@ -102,6 +112,8 @@ export function createTouchInput(document) {
       turboButton.dispose();
       fireButton.dispose();
       useButton.dispose();
+      switchPrevButton.dispose();
+      switchNextButton.dispose();
     },
   };
 }
