@@ -17,7 +17,9 @@ export function updateMachineGunCooldown(vehicle, dt) {
 /**
  * Hitscan machine gun fire (research.md §3, FR-003): a raycast from the
  * vehicle's position along its facing direction, range-limited, excluding
- * the shooter's own chassis. Fires at most once every `1 / fireRate`
+ * the shooter's own chassis and sensor colliders (pickups/mines/oil-slick
+ * segments — a shot passing near one shouldn't stop there instead of
+ * reaching the vehicle behind it). Fires at most once every `1 / fireRate`
  * seconds (unlimited ammo — only fire rate limits it).
  */
 export function tryFireMachineGun(world, vehicle, firing) {
@@ -37,7 +39,7 @@ export function tryFireMachineGun(world, vehicle, firing) {
     ray,
     WEAPONS.machineGun.range,
     true,
-    undefined,
+    RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
     undefined,
     undefined,
     vehicle.chassisBody,

@@ -26,8 +26,9 @@ A named stat profile (research.md §7), read from
 | `archetype` | `ArchetypeConfig` | Set at spawn; drives mass/hp/speed-cap/turn-rate/turbo. |
 | `hp` | number | Current health; starts at `archetype.maxHp`. |
 | `eliminated` | boolean | `true` once `hp <= 0`. An eliminated vehicle stops responding to input and ramming/weapons no longer apply to it (Edge Cases: no further outcome resolution — that's a future match-flow feature). |
-| `machineGunCooldownRemaining` | number (seconds) | Counts down; fire is allowed only at `0`. |
-| `pickupWeapon` | `PickupWeaponSlot \| null` | The currently held pickup-type weapon, or `null` if none collected/all ammo spent. |
+| `machineGunCooldownRemaining` | number (seconds) | Counts down; fire is allowed only at `0`. Machine gun has unlimited ammo and needs no pickup — always available. |
+| `weaponSlots` | `PickupWeaponSlot[]` | The vehicle's pickup-weapon inventory: at most one slot per weapon type, in collection order. Empty until the first pickup. |
+| `selectedWeaponIndex` | number | Index into `weaponSlots` of the weapon `Use` currently fires; cycled by `switchWeapon()` (UI: prev/next buttons or keyboard). Meaningless (and unused) when `weaponSlots` is empty. |
 
 **Validation / invariants** (carried over from Principle II, now applied to
 ramming too): all HP changes from ramming or weapons MUST be computed from
@@ -39,8 +40,8 @@ data read at the moment of a physics collision/hit event (research.md §1/
 | Field | Type | Notes |
 |---|---|---|
 | `type` | enum: `rockets` \| `homingRockets` \| `mines` \| `oilSlick` | |
-| `ammo` | number | Decrements by 1 per use; slot becomes `null` on the vehicle at 0. |
-| `lockState` | `{ progress: number, targetVehicle: Vehicle \| null } \| null` | Only meaningful for `homingRockets` — tracks hold-to-lock progress (research.md §9) while `InputState.usePickup` is held. |
+| `ammo` | number | Decrements by 1 per use. Collecting the same type again refills it to `ammoPerPickup`; reaching `0` removes the slot from `Vehicle.weaponSlots` (and adjusts `selectedWeaponIndex` to stay valid). |
+| `lockState` | `{ progress: number, targetVehicle: Vehicle \| null } \| null` | Only meaningful for `homingRockets` — tracks hold-to-lock progress (research.md §9) while `InputState.usePickup` is held. Cleared if the slot is switched away from mid-lock. |
 
 ## Pickup
 
@@ -104,6 +105,7 @@ in this slice (Assumptions).
 |---|---|---|
 | `fire` | boolean | Held. Drives the machine gun while `true` and `machineGunCooldownRemaining === 0`. |
 | `usePickup` | boolean | Held. Rising edge triggers instant-use weapons (rockets/mines/oil slick); held duration drives homing-rocket lock-on. |
+| `switchWeaponPrev`, `switchWeaponNext` | boolean | Edge-triggered (true only the frame the key/button is pressed) — cycles `Vehicle.selectedWeaponIndex` through `weaponSlots`, matching `turbo`'s edge-trigger shape. |
 
 `moveAxis`, `aimAxis`, `drift`, `turbo` are unchanged from 001/003.
 `aimAxis` remains unbound in this feature too (research.md §9).

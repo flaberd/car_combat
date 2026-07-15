@@ -112,7 +112,11 @@ export function createVehicle(world, scene, archetype, options = {}) {
     hp: archetype.maxHp,
     eliminated: false,
     machineGunCooldownRemaining: 0,
-    pickupWeapon: null,
+    // Held pickup weapons (data-model.md PickupWeaponSlot[]); the vehicle
+    // can carry one of each type at once, cycled with switchWeapon()
+    // (src/combat/pickupWeaponUse.js). Empty until the first pickup.
+    weaponSlots: [],
+    selectedWeaponIndex: 0,
     previousUsePickup: false,
     // Set by src/combat/oilSlick.js while overlapping an oil-slick segment
     // (research.md §6); 1 = no effect.

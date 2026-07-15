@@ -13,8 +13,9 @@ import { createPickup, handlePickupCollision, updatePickup } from "./combat/pick
 import { updateProjectile } from "./combat/projectile.js";
 import { updateMine, handleMineCollision } from "./combat/mine.js";
 import { updateOilSlickSegment, handleOilSlickCollision } from "./combat/oilSlick.js";
-import { updatePickupWeaponUse } from "./combat/pickupWeaponUse.js";
+import { updatePickupWeaponUse, switchWeapon } from "./combat/pickupWeaponUse.js";
 import { ARCHETYPES } from "./config/tuning.js";
+import { createHud } from "./ui/hud.js";
 
 const BOT_ARCHETYPE_ID = "balanced";
 
@@ -87,6 +88,7 @@ async function main() {
   const startGateEl = document.getElementById("start-gate");
   const startButtonEl = document.getElementById("start-button");
   const archetypeSelectEl = document.getElementById("archetype-select");
+  const hud = createHud(document);
 
   let playerVehicle = null;
   let botVehicle = null;
@@ -104,6 +106,12 @@ async function main() {
     if (!inputController.isGameplayBlocked()) {
       const inputState = inputController.read();
       const botInputState = seekBot.computeInputState();
+
+      // Weapon switching is edge-triggered per animate() frame (like the
+      // input read itself), not per physics substep — otherwise a single
+      // button press could cycle through several weapons in one frame.
+      if (inputState.switchWeaponPrev) switchWeapon(playerVehicle, -1);
+      if (inputState.switchWeaponNext) switchWeapon(playerVehicle, 1);
 
       physicsAccumulator += frameDelta;
       while (physicsAccumulator >= FIXED_TIMESTEP) {
@@ -153,6 +161,7 @@ async function main() {
         playerVehicle.mesh.position,
         playerVehicle.mesh.quaternion,
       );
+      hud.update(playerVehicle);
     }
 
     renderer.render(scene, camera);
@@ -182,6 +191,8 @@ async function main() {
       button.addEventListener("click", () => {
         archetypeSelectEl.classList.add("hidden");
         spawnMatch(button.dataset.archetype);
+        hud.show();
+        hud.update(playerVehicle);
         lastTime = performance.now();
         requestAnimationFrame(animate);
       }),
