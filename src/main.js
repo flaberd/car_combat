@@ -6,7 +6,7 @@ import { createInputController } from "./input/inputController.js";
 import { createStartGate } from "./input/startGate.js";
 import { createVehicle, stepVehicleControl } from "./vehicle/vehicle.js";
 import { createSeekBot } from "./combat/seekBot.js";
-import { registerVehicle, getAllVehicles } from "./combat/registry.js";
+import { registerVehicle, unregisterVehicle, getAllVehicles } from "./combat/registry.js";
 import { handleRammingCollision } from "./combat/ramming.js";
 import { tryFireMachineGun, updateMachineGunCooldown } from "./combat/machineGun.js";
 import { createPickup, handlePickupCollision, updatePickup } from "./combat/pickup.js";
@@ -15,10 +15,13 @@ import { updateMine, handleMineCollision } from "./combat/mine.js";
 import { updateOilSlickSegment, handleOilSlickCollision } from "./combat/oilSlick.js";
 import { updatePickupWeaponUse, switchWeapon } from "./combat/pickupWeaponUse.js";
 import { findBestTarget, createTargetMarker, updateTargetMarker } from "./combat/targeting.js";
+import { createWorldHealthBar, updateWorldHealthBar } from "./ui/worldHealthBar.js";
 import { ARCHETYPES, WEAPONS } from "./config/tuning.js";
 import { createHud } from "./ui/hud.js";
 
 const BOT_ARCHETYPE_ID = "balanced";
+const BOT_SPAWN_POSITION = { x: 0, y: 2, z: -15 };
+const BOT_RESPAWN_DELAY = 2; // seconds after elimination before a fresh bot appears
 
 // Fixed, non-random pickup locations (spec Non-Goals), spread around the
 // arena away from the two spawn points.
@@ -68,6 +71,7 @@ async function main() {
   const projectiles = [];
   const oilSegments = [];
   const targetMarker = createTargetMarker(scene);
+  const botHealthBar = createWorldHealthBar(scene);
 
   const touchControlsEl = document.getElementById("touch-controls");
   const rotatePromptEl = document.getElementById("rotate-prompt");
@@ -105,6 +109,10 @@ async function main() {
   // existing no-persistence design (data-model.md: nothing survives a
   // reload) rather than hand-rolling teardown for each one.
   let matchOver = false;
+  // Counts down after the bot is eliminated and removed, until a fresh one
+  // spawns — 0 means "no respawn pending" (either a bot already exists, or
+  // none is due yet).
+  let botRespawnRemaining = 0;
 
   let physicsAccumulator = 0;
   let lastTime = performance.now();
@@ -118,7 +126,6 @@ async function main() {
     if (!inputController.isGameplayBlocked()) {
       if (!matchOver) {
         const inputState = inputController.read();
-        const botInputState = seekBot.computeInputState();
 
         // Weapon switching is edge-triggered per animate() frame (like the
         // input read itself), not per physics substep — otherwise a single
@@ -132,12 +139,20 @@ async function main() {
         physicsAccumulator += frameDelta;
         while (physicsAccumulator >= FIXED_TIMESTEP) {
           stepVehicleControl(playerVehicle, inputState, FIXED_TIMESTEP);
-          stepVehicleControl(botVehicle, botInputState, FIXED_TIMESTEP);
-
           updateMachineGunCooldown(playerVehicle, FIXED_TIMESTEP);
-          updateMachineGunCooldown(botVehicle, FIXED_TIMESTEP);
           tryFireMachineGun(world, playerVehicle, inputState.fire);
-          tryFireMachineGun(world, botVehicle, botInputState.fire);
+
+          if (botVehicle) {
+            // Recomputed fresh every substep (not once per frame) — the bot
+            // can be removed and a fresh one spawned mid-loop (several
+            // substeps can run per animate() frame), and a stale input
+            // object from before a respawn would be `null` for a plain
+            // vehicle field access to crash on.
+            const botInputState = seekBot.computeInputState();
+            stepVehicleControl(botVehicle, botInputState, FIXED_TIMESTEP);
+            updateMachineGunCooldown(botVehicle, FIXED_TIMESTEP);
+            tryFireMachineGun(world, botVehicle, botInputState.fire);
+          }
 
           updatePickupWeaponUse(world, scene, playerVehicle, inputState, {
             projectiles,
@@ -169,16 +184,25 @@ async function main() {
             matchOver = true;
             break;
           }
+
+          if (botVehicle?.eliminated) {
+            removeBotVehicle();
+            botRespawnRemaining = BOT_RESPAWN_DELAY;
+          } else if (!botVehicle && botRespawnRemaining > 0) {
+            botRespawnRemaining -= FIXED_TIMESTEP;
+            if (botRespawnRemaining <= 0) spawnBot();
+          }
         }
 
         playerVehicle.syncMesh();
-        botVehicle.syncMesh();
+        botVehicle?.syncMesh();
         followCamera.update(
           frameDelta,
           playerVehicle.mesh.position,
           playerVehicle.mesh.quaternion,
         );
         hud.update(playerVehicle);
+        updateWorldHealthBar(botHealthBar, botVehicle, camera);
 
         if (matchOver) {
           gameOverEl.classList.remove("hidden");
@@ -189,18 +213,39 @@ async function main() {
     renderer.render(scene, camera);
   }
 
+  /** Creates a fresh bot vehicle + seekBot AI, used both for the initial spawn and every respawn. */
+  function spawnBot() {
+    botVehicle = createVehicle(world, scene, ARCHETYPES[BOT_ARCHETYPE_ID], {
+      spawnPosition: BOT_SPAWN_POSITION,
+      color: 0xdd3333,
+    });
+    registerVehicle(botVehicle);
+    seekBot = createSeekBot(botVehicle, playerVehicle);
+    if (import.meta.env.DEV && window.__debug) {
+      window.__debug.botVehicle = botVehicle;
+    }
+  }
+
+  /** Fully removes the eliminated bot (mesh, physics body, registry entry) — no lingering wreck. */
+  function removeBotVehicle() {
+    scene.remove(botVehicle.mesh);
+    for (const wheelMesh of botVehicle.wheelMeshes) scene.remove(wheelMesh);
+    unregisterVehicle(botVehicle);
+    world.removeRigidBody(botVehicle.chassisBody);
+    botVehicle = null;
+    seekBot = null;
+    if (import.meta.env.DEV && window.__debug) {
+      window.__debug.botVehicle = null;
+    }
+  }
+
   function spawnMatch(playerArchetypeId) {
     playerVehicle = createVehicle(world, scene, ARCHETYPES[playerArchetypeId], {
       spawnPosition: { x: 0, y: 2, z: 0 },
       color: 0x2266dd,
     });
-    botVehicle = createVehicle(world, scene, ARCHETYPES[BOT_ARCHETYPE_ID], {
-      spawnPosition: { x: 0, y: 2, z: -15 },
-      color: 0xdd3333,
-    });
     registerVehicle(playerVehicle);
-    registerVehicle(botVehicle);
-    seekBot = createSeekBot(botVehicle, playerVehicle);
+    spawnBot();
     if (import.meta.env.DEV) {
       window.__debug = {
         playerVehicle,
@@ -210,6 +255,7 @@ async function main() {
         projectiles,
         oilSegments,
         targetMarker,
+        botHealthBar,
       };
       window.__debugWorld = world;
     }
