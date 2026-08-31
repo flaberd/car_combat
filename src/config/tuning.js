@@ -7,7 +7,11 @@
 // ARCHETYPES' mass/hp/speed/turn/turbo stats, not by shape.
 export const VEHICLE_SHAPE = {
   chassisHalfExtents: { x: 0.9, y: 0.4, z: 2.0 },
-  brakeForce: 40,
+  // Applied only when input opposes current motion (vehicle.js
+  // computeBrakeForce) — deliberately much stronger than any archetype's
+  // engineForce so reversing direction feels snappy instead of fighting
+  // momentum with weak reverse throttle.
+  brakeForce: 6000,
   wheelRadius: 0.4,
   suspensionRestLength: 0.6,
   wheelBaseHalf: 1.6, // distance from chassis center to front/rear axle, along local z

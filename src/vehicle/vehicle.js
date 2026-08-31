@@ -23,6 +23,8 @@ const WHEEL_BASE_QUAT = new THREE.Quaternion().setFromAxisAngle(
 const _steerQuat = new THREE.Quaternion();
 const _upAxis = new THREE.Vector3(0, 1, 0);
 const _wheelLocalOffset = new THREE.Vector3();
+const _bodyQuat = new THREE.Quaternion();
+const _forwardVec = new THREE.Vector3();
 
 /**
  * Creates a vehicle: a Rapier dynamic chassis driven entirely by a
@@ -75,6 +77,14 @@ export function createVehicle(world, scene, archetype, options = {}) {
 
   for (let i = 0; i < WHEEL_DEFS.length; i++) {
     controller.setWheelSuspensionStiffness(i, 24);
+    // Without damping the suspension spring never settles — the chassis
+    // oscillates continuously (observed: ride height bouncing ~0.6m, ±2-3
+    // m/s vertical velocity, even driving in a straight line), which also
+    // corrupts the horizontal speed reading used for braking/drift.
+    // Tuned empirically for this stiffness/mass range — settles to a
+    // stable ride height within ~1s across all archetypes (700-1500kg).
+    controller.setWheelSuspensionCompression(i, 8);
+    controller.setWheelSuspensionRelaxation(i, 8);
     controller.setWheelMaxSuspensionTravel(i, suspensionRestLength * 0.5);
     controller.setWheelFrictionSlip(i, 3.0);
   }
@@ -152,6 +162,19 @@ export function computeSteerAngle(archetype, moveAxisX) {
 }
 
 /**
+ * Pure: brake force for this frame. When the throttle input requests the
+ * opposite direction from the vehicle's current motion (holding S while
+ * still moving forward, or W while still moving backward), a strong
+ * dedicated brake is applied instead of relying on reverse engine force to
+ * fight momentum — the latter is what made stopping/reversing feel slow.
+ * Zero once the vehicle is stationary or already moving the requested
+ * direction, so normal acceleration/reverse takes back over.
+ */
+export function computeBrakeForce(brakeForce, moveAxisY, currentSpeed) {
+  return moveAxisY * currentSpeed < 0 ? brakeForce : 0;
+}
+
+/**
  * Drive/steer/drift/turbo control step. Maps InputState.moveAxis to engine
  * force + steering (FR-002/FR-003), InputState.drift to the traction state
  * that governs side-friction (FR-004), and InputState.turbo to the
@@ -181,14 +204,25 @@ export function stepVehicleControl(vehicle, inputState, dt) {
   const turboMultiplier =
     turbo.status === "boosting" ? archetype.turboBoostMultiplier : 1;
 
+  // Rapier's controller.currentVehicleSpeed() proved unreliable — it can
+  // read large spurious sign flips frame-to-frame even during plain
+  // forward acceleration with no brake/reverse input, which made
+  // computeBrakeForce misfire constantly. Use the chassis's actual world
+  // velocity projected onto its forward axis instead — the true signed
+  // speed, not an internal wheel-based estimate.
+  const currentSpeed = signedForwardSpeed(vehicle.chassisBody);
   const engineForce = computeEngineForce(
     archetype,
     inputState.moveAxis.y,
     turboMultiplier,
   );
   const steerAngle = computeSteerAngle(archetype, inputState.moveAxis.x);
+  const brakeForce = computeBrakeForce(
+    VEHICLE_SHAPE.brakeForce,
+    inputState.moveAxis.y,
+    currentSpeed,
+  );
 
-  const currentSpeed = controller.currentVehicleSpeed();
   vehicle.tractionState = computeTractionState(inputState.drift, currentSpeed);
   applyTractionState(
     controller,
@@ -198,9 +232,13 @@ export function stepVehicleControl(vehicle, inputState, dt) {
   );
 
   wheelDefs.forEach((wheel, i) => {
-    controller.setWheelEngineForce(i, wheel.drive ? engineForce : 0);
+    // While braking, engine force is suppressed so a weak reverse throttle
+    // doesn't fight the (much stronger) brake — the brake alone decides
+    // how fast the vehicle sheds momentum. Brake applies to all wheels,
+    // not just the driven ones, for full stopping power.
+    controller.setWheelEngineForce(i, wheel.drive && brakeForce === 0 ? engineForce : 0);
     controller.setWheelSteering(i, wheel.steer ? steerAngle : 0);
-    controller.setWheelBrake(i, 0);
+    controller.setWheelBrake(i, brakeForce);
   });
 
   controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
@@ -211,6 +249,18 @@ export function stepVehicleControl(vehicle, inputState, dt) {
 function snapshotApproachSpeed(vehicle) {
   const linvel = vehicle.chassisBody.linvel();
   vehicle.approachSpeed = Math.hypot(linvel.x, linvel.y, linvel.z);
+}
+
+/** The chassis's world linear velocity projected onto its own forward axis — positive moving forward, negative moving backward. */
+function signedForwardSpeed(chassisBody) {
+  const rotation = chassisBody.rotation();
+  _bodyQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
+  _forwardVec.set(0, 0, 1).applyQuaternion(_bodyQuat);
+
+  const linvel = chassisBody.linvel();
+  return (
+    linvel.x * _forwardVec.x + linvel.y * _forwardVec.y + linvel.z * _forwardVec.z
+  );
 }
 
 /**
