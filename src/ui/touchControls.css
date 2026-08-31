@@ -134,6 +134,21 @@
   background: #e04b4b;
 }
 
+#hud-lock-track {
+  width: 180px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+
+#hud-lock-fill {
+  height: 100%;
+  width: 0%;
+  background: #ff9a2e;
+}
+
 #rotate-prompt {
   position: fixed;
   inset: 0;
