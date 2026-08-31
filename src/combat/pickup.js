@@ -22,7 +22,6 @@ export function createPickupWeaponSlot(weaponType) {
   return {
     type: weaponType,
     ammo: ammoForWeaponType(weaponType),
-    lockState: null,
   };
 }
 

@@ -17,3 +17,8 @@ export function unregisterVehicle(vehicle) {
 export function getVehicleByColliderHandle(handle) {
   return vehiclesByColliderHandle.get(handle) ?? null;
 }
+
+/** All currently registered vehicles — used by targeting.js to enumerate candidates. */
+export function getAllVehicles() {
+  return Array.from(vehiclesByColliderHandle.values());
+}

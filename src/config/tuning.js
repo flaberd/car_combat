@@ -94,10 +94,14 @@ export const WEAPONS = {
   homingRockets: {
     damagePerHit: 25,
     ammoPerPickup: 3,
-    lockOnTime: 1.5,
     projectileSpeed: 45,
-    turnRate: 2.2, // radians/sec the projectile can steer toward its target
-    range: 50,
+    turnRate: 4.5, // radians/sec the projectile can steer toward its target
+    range: 50, // also used as the targeting system's search radius
+    // Angular search cone for auto-target-acquisition (src/combat/
+    // targeting.js), centered on the vehicle's facing — 360 means search
+    // all the way around, since the rocket launches upward and curves to
+    // its target regardless of which way the vehicle is facing.
+    targetingConeDegrees: 360,
   },
   mines: {
     damageOnTrigger: 40,

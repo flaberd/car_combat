@@ -6,7 +6,7 @@ function fakeVehicle(weaponSlots, selectedWeaponIndex = 0) {
 }
 
 function slot(type, ammo = 3) {
-  return { type, ammo, lockState: null };
+  return { type, ammo };
 }
 
 describe("switchWeapon", () => {
@@ -36,17 +36,6 @@ describe("switchWeapon", () => {
     expect(vehicle.selectedWeaponIndex).toBe(2); // wraps to the last slot
 
     switchWeapon(vehicle, -1);
-    expect(vehicle.selectedWeaponIndex).toBe(1);
-  });
-
-  it("cancels an in-progress homing-rocket lock on the slot switched away from", () => {
-    const homingSlot = slot("homingRockets");
-    homingSlot.lockState = { progress: 0.5, targetVehicle: {} };
-    const vehicle = fakeVehicle([homingSlot, slot("mines")], 0);
-
-    switchWeapon(vehicle, 1);
-
-    expect(homingSlot.lockState).toBe(null);
     expect(vehicle.selectedWeaponIndex).toBe(1);
   });
 });

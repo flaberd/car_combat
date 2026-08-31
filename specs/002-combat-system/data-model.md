@@ -29,6 +29,7 @@ A named stat profile (research.md §7), read from
 | `machineGunCooldownRemaining` | number (seconds) | Counts down; fire is allowed only at `0`. Machine gun has unlimited ammo and needs no pickup — always available. |
 | `weaponSlots` | `PickupWeaponSlot[]` | The vehicle's pickup-weapon inventory: at most one slot per weapon type, in collection order. Empty until the first pickup. |
 | `selectedWeaponIndex` | number | Index into `weaponSlots` of the weapon `Use` currently fires; cycled by `switchWeapon()` (UI: prev/next buttons or keyboard). Meaningless (and unused) when `weaponSlots` is empty. |
+| `activeTarget` | `Vehicle \| null` | Kept up to date by `src/combat/targeting.js` against the selected weapon's `targetingConeDegrees`/`range` (only weapons that need one set it, currently just `homingRockets`); `null` when that weapon isn't selected or no valid target is in range/cone. |
 
 **Validation / invariants** (carried over from Principle II, now applied to
 ramming too): all HP changes from ramming or weapons MUST be computed from
@@ -41,7 +42,23 @@ data read at the moment of a physics collision/hit event (research.md §1/
 |---|---|---|
 | `type` | enum: `rockets` \| `homingRockets` \| `mines` \| `oilSlick` | |
 | `ammo` | number | Decrements by 1 per use. Collecting the same type again refills it to `ammoPerPickup`; reaching `0` removes the slot from `Vehicle.weaponSlots` (and adjusts `selectedWeaponIndex` to stay valid). |
-| `lockState` | `{ progress: number, targetVehicle: Vehicle \| null } \| null` | Only meaningful for `homingRockets` — tracks hold-to-lock progress (research.md §9) while `InputState.usePickup` is held. Cleared if the slot is switched away from mid-lock. |
+
+Every weapon fires on a rising-edge tap of `InputState.usePickup` — there is
+no hold-to-charge mechanic. `homingRockets` additionally requires
+`Vehicle.activeTarget` to be non-null (see Targeting below); tapping Use
+with no target in range does nothing.
+
+## Targeting
+
+Auto-target-acquisition, reusable by any weapon that needs one (currently
+just `homingRockets`) — not a per-weapon-slot concept, so it lives outside
+`PickupWeaponSlot` on `Vehicle.activeTarget` instead.
+
+| Concept | Notes |
+|---|---|
+| Search | `findBestTarget(originPosition, originForwardXZ, candidates, { radius, coneDegrees })` (`src/combat/targeting.js`) — nearest non-eliminated candidate within `radius`, optionally restricted to an angular cone centered on facing. Recomputed every frame the weapon is selected. |
+| Config | Read from the selected weapon's `WEAPONS[type]` entry: `range` (doubles as search radius) and `targetingConeDegrees`. `homingRockets` uses `coneDegrees: 360` (omnidirectional) since the projectile launches in a lob arc and curves to its target regardless of which way the vehicle is facing. |
+| Marker | A 3D ring (`createTargetMarker`/`updateTargetMarker`) hovers over `Vehicle.activeTarget` when non-null, the player's visual confirmation of what Use will fire at. |
 
 ## Pickup
 
@@ -65,7 +82,7 @@ Kinematic, non-physics-body (research.md §4).
 | `kind` | enum: `rocket` \| `homingRocket` | |
 | `position`, `velocity` | Vector3 | Advanced manually each frame. |
 | `ownerVehicle` | `Vehicle` | Excluded from its own hit detection. |
-| `target` | `Vehicle \| null` | Only set for `homingRocket`, from the lock acquired via `PickupWeaponSlot.lockState`. |
+| `target` | `Vehicle \| null` | Only set for `homingRocket`, from `Vehicle.activeTarget` at the moment of firing (see Targeting). |
 | `remainingRange` | number | Distance-based expiry (rocket 60m / homing rocket 50m, per spec). |
 
 ## Mine
@@ -104,7 +121,7 @@ in this slice (Assumptions).
 | Field | Type | Notes |
 |---|---|---|
 | `fire` | boolean | Held. Drives the machine gun while `true` and `machineGunCooldownRemaining === 0`. |
-| `usePickup` | boolean | Held. Rising edge triggers instant-use weapons (rockets/mines/oil slick); held duration drives homing-rocket lock-on. |
+| `usePickup` | boolean | Held. Rising edge fires the selected pickup weapon (rockets/mines/oil slick/homing rockets — all fire on a tap; homing rockets additionally require `Vehicle.activeTarget`, see Targeting). |
 | `switchWeaponPrev`, `switchWeaponNext` | boolean | Edge-triggered (true only the frame the key/button is pressed) — cycles `Vehicle.selectedWeaponIndex` through `weaponSlots`, matching `turbo`'s edge-trigger shape. |
 
 `moveAxis`, `aimAxis`, `drift`, `turbo` are unchanged from 001/003.

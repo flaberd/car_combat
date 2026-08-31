@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { WEAPONS } from "../config/tuning.js";
 import { createProjectile } from "./projectile.js";
 import { createMine } from "./mine.js";
 import { deployOilSlick } from "./oilSlick.js";
@@ -19,16 +18,11 @@ function consumeAmmo(vehicle) {
 
 /**
  * Cycles the vehicle's selected weapon slot by `direction` (+1 next, -1
- * previous), wrapping around. No-op with an empty inventory. Cancels any
- * in-progress homing-rocket lock on the slot being switched away from,
- * since its hold-to-lock state no longer applies once it's not selected.
+ * previous), wrapping around. No-op with an empty inventory.
  */
 export function switchWeapon(vehicle, direction) {
   const slots = vehicle.weaponSlots;
   if (slots.length === 0) return;
-
-  const currentSlot = slots[vehicle.selectedWeaponIndex];
-  if (currentSlot?.lockState) currentSlot.lockState = null;
 
   vehicle.selectedWeaponIndex =
     (vehicle.selectedWeaponIndex + direction + slots.length) % slots.length;
@@ -36,59 +30,25 @@ export function switchWeapon(vehicle, direction) {
 
 /**
  * Dispatches `InputState.usePickup` to the vehicle's selected weapon slot
- * (data-model.md PickupWeaponSlot, FR-009/FR-010/FR-011/FR-012, spec
- * "Weapon fire input" research.md §9). Rockets/mines/oil slick fire on the
- * rising edge; homing rockets accumulate lock progress while held and
- * auto-fire once `lockOnTime` elapses, cancelling if released early.
+ * (data-model.md PickupWeaponSlot, FR-009/FR-010/FR-011/FR-012). Every
+ * weapon here fires on the rising edge (a quick tap), including homing
+ * rockets — the old hold-to-lock mechanic is gone. Homing rockets instead
+ * fire at whatever `vehicle.activeTarget` currently is (kept up to date
+ * externally by src/combat/targeting.js against this weapon's targeting
+ * cone/radius); with no target in range, tapping Use does nothing.
  * `collections` is `{ projectiles, mines, oilSegments }` — arrays owned by
  * main.js that this function pushes newly created entities into.
  */
-export function updatePickupWeaponUse(
-  world,
-  scene,
-  vehicle,
-  opponentVehicle,
-  inputState,
-  dt,
-  collections,
-) {
+export function updatePickupWeaponUse(world, scene, vehicle, inputState, collections) {
   const slot = vehicle.weaponSlots[vehicle.selectedWeaponIndex] ?? null;
   const wasHeld = vehicle.previousUsePickup;
   vehicle.previousUsePickup = inputState.usePickup;
 
-  if (!slot) return;
+  const usePressed = inputState.usePickup && !wasHeld;
+  if (!slot || !usePressed) return;
 
   const origin = vehicle.chassisBody.translation();
   _forward.set(0, 0, 1).applyQuaternion(vehicle.mesh.quaternion);
-
-  if (slot.type === "homingRockets") {
-    if (!inputState.usePickup) {
-      slot.lockState = null; // released before lock completed -> cancel
-      return;
-    }
-    if (!slot.lockState) {
-      slot.lockState = { progress: 0, targetVehicle: opponentVehicle };
-    }
-    slot.lockState.progress += dt;
-    if (slot.lockState.progress >= WEAPONS.homingRockets.lockOnTime) {
-      collections.projectiles.push(
-        createProjectile(
-          scene,
-          "homingRocket",
-          origin,
-          { x: _forward.x, z: _forward.z },
-          vehicle,
-          opponentVehicle,
-        ),
-      );
-      slot.lockState = null;
-      consumeAmmo(vehicle);
-    }
-    return;
-  }
-
-  const usePressed = inputState.usePickup && !wasHeld;
-  if (!usePressed) return;
 
   if (slot.type === "rockets") {
     collections.projectiles.push(
@@ -98,6 +58,19 @@ export function updatePickupWeaponUse(
         origin,
         { x: _forward.x, z: _forward.z },
         vehicle,
+      ),
+    );
+    consumeAmmo(vehicle);
+  } else if (slot.type === "homingRockets") {
+    if (!vehicle.activeTarget) return; // no target in range/cone -> nothing to fire at
+    collections.projectiles.push(
+      createProjectile(
+        scene,
+        "homingRocket",
+        origin,
+        { x: _forward.x, z: _forward.z },
+        vehicle,
+        vehicle.activeTarget,
       ),
     );
     consumeAmmo(vehicle);
