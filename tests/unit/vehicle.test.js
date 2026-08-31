@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeEngineForce,
   computeSteerAngle,
-  computeBrakeForce,
+  computeCounterForceMultiplier,
   applyDamage,
 } from "../../src/vehicle/vehicle.js";
 import { ARCHETYPES } from "../../src/config/tuning.js";
@@ -43,27 +43,27 @@ describe("computeSteerAngle", () => {
   });
 });
 
-describe("computeBrakeForce", () => {
-  it("brakes when holding back while still moving forward", () => {
-    expect(computeBrakeForce(6000, -1, 10)).toBe(6000);
+describe("computeCounterForceMultiplier", () => {
+  it("boosts when holding back while still moving forward", () => {
+    expect(computeCounterForceMultiplier(-1, 10, 3)).toBe(3);
   });
 
-  it("brakes when holding forward while still moving backward", () => {
-    expect(computeBrakeForce(6000, 1, -10)).toBe(6000);
+  it("boosts when holding forward while still moving backward", () => {
+    expect(computeCounterForceMultiplier(1, -10, 3)).toBe(3);
   });
 
-  it("does not brake when input matches the current direction of motion", () => {
-    expect(computeBrakeForce(6000, 1, 10)).toBe(0);
-    expect(computeBrakeForce(6000, -1, -10)).toBe(0);
+  it("is unboosted when input matches the current direction of motion", () => {
+    expect(computeCounterForceMultiplier(1, 10, 3)).toBe(1);
+    expect(computeCounterForceMultiplier(-1, -10, 3)).toBe(1);
   });
 
-  it("does not brake with no throttle input", () => {
-    expect(computeBrakeForce(6000, 0, 10)).toBe(0);
+  it("is unboosted with no throttle input", () => {
+    expect(computeCounterForceMultiplier(0, 10, 3)).toBe(1);
   });
 
-  it("does not brake while stationary", () => {
-    expect(computeBrakeForce(6000, 1, 0)).toBe(0);
-    expect(computeBrakeForce(6000, -1, 0)).toBe(0);
+  it("is unboosted while stationary", () => {
+    expect(computeCounterForceMultiplier(1, 0, 3)).toBe(1);
+    expect(computeCounterForceMultiplier(-1, 0, 3)).toBe(1);
   });
 });
 
