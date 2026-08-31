@@ -14,33 +14,41 @@ function fakeVehicle(handle, { mass, hp, approachSpeed }) {
 }
 
 describe("computeRamDamage", () => {
-  it("computes damage = speed * mass * k", () => {
-    expect(computeRamDamage(10, 1000, 0.01)).toBeCloseTo(100);
+  it("computes damage = (speed - minImpactSpeed) * mass * k", () => {
+    expect(computeRamDamage(10, 1000, 0.01, 3)).toBeCloseTo((10 - 3) * 1000 * 0.01);
   });
 
   it("scales with speed", () => {
-    expect(computeRamDamage(20, 1000, 0.01)).toBeCloseTo(200);
+    const lower = computeRamDamage(10, 1000, 0.01, 3);
+    const higher = computeRamDamage(20, 1000, 0.01, 3);
+    expect(higher).toBeGreaterThan(lower);
   });
 
   it("scales with mass — a heavier vehicle deals more damage at the same speed", () => {
-    const lightDamage = computeRamDamage(10, 700, 0.01);
-    const heavyDamage = computeRamDamage(10, 1500, 0.01);
+    const lightDamage = computeRamDamage(10, 700, 0.01, 3);
+    const heavyDamage = computeRamDamage(10, 1500, 0.01, 3);
     expect(heavyDamage).toBeGreaterThan(lightDamage);
   });
 
-  it("is zero at zero speed", () => {
-    expect(computeRamDamage(0, 1000, 0.01)).toBe(0);
+  it("is zero at or below the minimum-impact speed threshold", () => {
+    expect(computeRamDamage(3, 1000, 0.01, 3)).toBe(0);
+    expect(computeRamDamage(1, 1000, 0.01, 3)).toBe(0);
+    expect(computeRamDamage(0, 1000, 0.01, 3)).toBe(0);
+  });
+
+  it("does not go negative for speeds below the threshold", () => {
+    expect(computeRamDamage(0.5, 1000, 0.01, 3)).toBe(0);
   });
 
   it("uses the magnitude of speed regardless of sign", () => {
-    expect(computeRamDamage(-10, 1000, 0.01)).toBeCloseTo(
-      computeRamDamage(10, 1000, 0.01),
+    expect(computeRamDamage(-10, 1000, 0.01, 3)).toBeCloseTo(
+      computeRamDamage(10, 1000, 0.01, 3),
     );
   });
 
-  it("defaults k from RAM tuning when not provided", () => {
-    // RAM.k is 0.01 per src/config/tuning.js — same result as passing it explicitly.
-    expect(computeRamDamage(10, 1000)).toBeCloseTo(100);
+  it("defaults k and minImpactSpeed from RAM tuning when not provided", () => {
+    // RAM.k is 0.004 and RAM.minImpactSpeed is 3 per src/config/tuning.js.
+    expect(computeRamDamage(10, 1000)).toBeCloseTo((10 - 3) * 1000 * 0.004);
   });
 });
 
@@ -53,8 +61,8 @@ describe("handleRammingCollision", () => {
 
     handleRammingCollision(1, 2, true);
 
-    expect(b.hp).toBeCloseTo(100 - 10 * 1000 * 0.01); // damaged by A's approach speed
-    expect(a.hp).toBeCloseTo(100 - 5 * 1000 * 0.01); // damaged by B's approach speed
+    expect(b.hp).toBeCloseTo(100 - (10 - 3) * 1000 * 0.004); // damaged by A's approach speed
+    expect(a.hp).toBeCloseTo(100 - (5 - 3) * 1000 * 0.004); // damaged by B's approach speed
 
     unregisterVehicle(a);
     unregisterVehicle(b);

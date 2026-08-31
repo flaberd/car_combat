@@ -68,10 +68,18 @@ export const CAMERA = {
   followLerp: 4.5,
 };
 
-// Ramming damage formula (specs/002-combat-system/spec.md): damage dealt to
-// the OTHER vehicle = this vehicle's own speed * mass * k, symmetric.
+// Ramming damage formula (specs/002-combat-system/spec.md, constitution
+// Principle II): damage dealt to the OTHER vehicle = (this vehicle's own
+// speed minus minImpactSpeed) * mass * k, symmetric. The constitution
+// explicitly allows tuning via "a damage multiplier, minimum-impact
+// threshold" — both live here.
 export const RAM = {
-  k: 0.01,
+  k: 0.004,
+  // Speed (m/s) below which a ram deals no damage at all — a slow bump/
+  // jockeying-for-position contact shouldn't hurt; only excess speed above
+  // this counts toward damage, so it also ramps in smoothly rather than
+  // jumping the instant this threshold is crossed.
+  minImpactSpeed: 3,
   // Per-vehicle debounce after taking ram damage: a single sustained ram
   // can make Rapier re-fire a "contact started" event several times as the
   // bodies jitter against each other, so this stops that from being
