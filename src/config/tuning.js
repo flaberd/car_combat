@@ -11,7 +11,7 @@ export const VEHICLE_SHAPE = {
   // (vehicle.js computeCounterForceMultiplier) — makes stopping/reversing
   // noticeably snappier than normal acceleration without using Rapier's
   // wheel brake, which caused a violent pitch/launch at speed.
-  brakeBoost: 3,
+  brakeBoost: 10,
   wheelRadius: 0.4,
   suspensionRestLength: 0.6,
   wheelBaseHalf: 1.6, // distance from chassis center to front/rear axle, along local z
