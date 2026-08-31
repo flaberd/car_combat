@@ -5,10 +5,14 @@ import { getVehicleByColliderHandle } from "./registry.js";
 /**
  * Pure: ramming damage formula (spec.md, Principle II) — damage dealt to
  * the OTHER vehicle, from THIS vehicle's own speed and mass at the moment
- * of impact. Symmetric: called once per vehicle in a colliding pair.
+ * of impact. Symmetric: called once per vehicle in a colliding pair. Only
+ * speed above `minImpactSpeed` counts (constitution Principle II's
+ * "minimum-impact threshold"), so a slow bump deals no damage and the
+ * ramp-in above the threshold is smooth rather than a sudden jump.
  */
-export function computeRamDamage(speed, mass, k = RAM.k) {
-  return Math.abs(speed) * mass * k;
+export function computeRamDamage(speed, mass, k = RAM.k, minImpactSpeed = RAM.minImpactSpeed) {
+  const excessSpeed = Math.max(0, Math.abs(speed) - minImpactSpeed);
+  return excessSpeed * mass * k;
 }
 
 /**
