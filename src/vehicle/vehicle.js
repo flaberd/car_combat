@@ -162,16 +162,24 @@ export function computeSteerAngle(archetype, moveAxisX) {
 }
 
 /**
- * Pure: brake force for this frame. When the throttle input requests the
- * opposite direction from the vehicle's current motion (holding S while
- * still moving forward, or W while still moving backward), a strong
- * dedicated brake is applied instead of relying on reverse engine force to
- * fight momentum — the latter is what made stopping/reversing feel slow.
- * Zero once the vehicle is stationary or already moving the requested
- * direction, so normal acceleration/reverse takes back over.
+ * Pure: engine-force multiplier for this frame. When the throttle input
+ * requests the opposite direction from the vehicle's current motion
+ * (holding S while still moving forward, or W while still moving
+ * backward), engine force is boosted by `boost` so the vehicle sheds
+ * momentum and reverses noticeably faster than normal acceleration.
+ *
+ * This deliberately goes through the same engine-force channel as normal
+ * driving rather than Rapier's dedicated wheel brake (setWheelBrake):
+ * that API was tried first and, at any nonzero value, made the chassis
+ * pitch violently and launch upward under braking at speed (an apparent
+ * wheel-lock/friction discontinuity in the raycast vehicle controller —
+ * unrelated to the brake force's magnitude, since 400 was just as bad as
+ * 6000). Scaling the already-stable engine-force path avoids that bug
+ * entirely. 1 (no boost) once the vehicle is stationary or already moving
+ * the requested direction, so normal acceleration/reverse takes over.
  */
-export function computeBrakeForce(brakeForce, moveAxisY, currentSpeed) {
-  return moveAxisY * currentSpeed < 0 ? brakeForce : 0;
+export function computeCounterForceMultiplier(moveAxisY, currentSpeed, boost) {
+  return moveAxisY * currentSpeed < 0 ? boost : 1;
 }
 
 /**
@@ -211,17 +219,17 @@ export function stepVehicleControl(vehicle, inputState, dt) {
   // velocity projected onto its forward axis instead — the true signed
   // speed, not an internal wheel-based estimate.
   const currentSpeed = signedForwardSpeed(vehicle.chassisBody);
+  const counterForceMultiplier = computeCounterForceMultiplier(
+    inputState.moveAxis.y,
+    currentSpeed,
+    VEHICLE_SHAPE.brakeBoost,
+  );
   const engineForce = computeEngineForce(
     archetype,
     inputState.moveAxis.y,
-    turboMultiplier,
+    turboMultiplier * counterForceMultiplier,
   );
   const steerAngle = computeSteerAngle(archetype, inputState.moveAxis.x);
-  const brakeForce = computeBrakeForce(
-    VEHICLE_SHAPE.brakeForce,
-    inputState.moveAxis.y,
-    currentSpeed,
-  );
 
   vehicle.tractionState = computeTractionState(inputState.drift, currentSpeed);
   applyTractionState(
@@ -232,13 +240,9 @@ export function stepVehicleControl(vehicle, inputState, dt) {
   );
 
   wheelDefs.forEach((wheel, i) => {
-    // While braking, engine force is suppressed so a weak reverse throttle
-    // doesn't fight the (much stronger) brake — the brake alone decides
-    // how fast the vehicle sheds momentum. Brake applies to all wheels,
-    // not just the driven ones, for full stopping power.
-    controller.setWheelEngineForce(i, wheel.drive && brakeForce === 0 ? engineForce : 0);
+    controller.setWheelEngineForce(i, wheel.drive ? engineForce : 0);
     controller.setWheelSteering(i, wheel.steer ? steerAngle : 0);
-    controller.setWheelBrake(i, brakeForce);
+    controller.setWheelBrake(i, 0);
   });
 
   controller.updateVehicle(dt, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
