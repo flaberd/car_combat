@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeEngineForce,
   computeSteerAngle,
+  computeBrakeForce,
   applyDamage,
 } from "../../src/vehicle/vehicle.js";
 import { ARCHETYPES } from "../../src/config/tuning.js";
@@ -39,6 +40,30 @@ describe("computeSteerAngle", () => {
 
   it("is zero with no steer input", () => {
     expect(computeSteerAngle(ARCHETYPES.balanced, 0)).toBeCloseTo(0);
+  });
+});
+
+describe("computeBrakeForce", () => {
+  it("brakes when holding back while still moving forward", () => {
+    expect(computeBrakeForce(6000, -1, 10)).toBe(6000);
+  });
+
+  it("brakes when holding forward while still moving backward", () => {
+    expect(computeBrakeForce(6000, 1, -10)).toBe(6000);
+  });
+
+  it("does not brake when input matches the current direction of motion", () => {
+    expect(computeBrakeForce(6000, 1, 10)).toBe(0);
+    expect(computeBrakeForce(6000, -1, -10)).toBe(0);
+  });
+
+  it("does not brake with no throttle input", () => {
+    expect(computeBrakeForce(6000, 0, 10)).toBe(0);
+  });
+
+  it("does not brake while stationary", () => {
+    expect(computeBrakeForce(6000, 1, 0)).toBe(0);
+    expect(computeBrakeForce(6000, -1, 0)).toBe(0);
   });
 });
 
