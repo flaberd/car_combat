@@ -128,6 +128,10 @@ export function createVehicle(world, scene, archetype, options = {}) {
     weaponSlots: [],
     selectedWeaponIndex: 0,
     previousUsePickup: false,
+    // Kept up to date by src/combat/targeting.js against the selected
+    // weapon's targeting radius/cone (only weapons that need one, e.g.
+    // homing rockets, set it); null when no valid target is in range.
+    activeTarget: null,
     // Set by src/combat/oilSlick.js while overlapping an oil-slick segment
     // (research.md §6); 1 = no effect.
     oilSlickMultiplier: 1,

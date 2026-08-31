@@ -6,7 +6,7 @@ import { createInputController } from "./input/inputController.js";
 import { createStartGate } from "./input/startGate.js";
 import { createVehicle, stepVehicleControl } from "./vehicle/vehicle.js";
 import { createSeekBot } from "./combat/seekBot.js";
-import { registerVehicle } from "./combat/registry.js";
+import { registerVehicle, getAllVehicles } from "./combat/registry.js";
 import { handleRammingCollision } from "./combat/ramming.js";
 import { tryFireMachineGun, updateMachineGunCooldown } from "./combat/machineGun.js";
 import { createPickup, handlePickupCollision, updatePickup } from "./combat/pickup.js";
@@ -14,7 +14,8 @@ import { updateProjectile } from "./combat/projectile.js";
 import { updateMine, handleMineCollision } from "./combat/mine.js";
 import { updateOilSlickSegment, handleOilSlickCollision } from "./combat/oilSlick.js";
 import { updatePickupWeaponUse, switchWeapon } from "./combat/pickupWeaponUse.js";
-import { ARCHETYPES } from "./config/tuning.js";
+import { findBestTarget, createTargetMarker, updateTargetMarker } from "./combat/targeting.js";
+import { ARCHETYPES, WEAPONS } from "./config/tuning.js";
 import { createHud } from "./ui/hud.js";
 
 const BOT_ARCHETYPE_ID = "balanced";
@@ -66,6 +67,7 @@ async function main() {
   const mines = [];
   const projectiles = [];
   const oilSegments = [];
+  const targetMarker = createTargetMarker(scene);
 
   const touchControlsEl = document.getElementById("touch-controls");
   const rotatePromptEl = document.getElementById("rotate-prompt");
@@ -124,6 +126,9 @@ async function main() {
         if (inputState.switchWeaponPrev) switchWeapon(playerVehicle, -1);
         if (inputState.switchWeaponNext) switchWeapon(playerVehicle, 1);
 
+        updateActiveTarget(playerVehicle);
+        updateTargetMarker(targetMarker, playerVehicle.activeTarget, frameDelta);
+
         physicsAccumulator += frameDelta;
         while (physicsAccumulator >= FIXED_TIMESTEP) {
           stepVehicleControl(playerVehicle, inputState, FIXED_TIMESTEP);
@@ -134,15 +139,11 @@ async function main() {
           tryFireMachineGun(world, playerVehicle, inputState.fire);
           tryFireMachineGun(world, botVehicle, botInputState.fire);
 
-          updatePickupWeaponUse(
-            world,
-            scene,
-            playerVehicle,
-            botVehicle,
-            inputState,
-            FIXED_TIMESTEP,
-            { projectiles, mines, oilSegments },
-          );
+          updatePickupWeaponUse(world, scene, playerVehicle, inputState, {
+            projectiles,
+            mines,
+            oilSegments,
+          });
 
           for (const pickup of pickups) updatePickup(pickup, FIXED_TIMESTEP);
           for (const mine of mines) updateMine(world, scene, mine, FIXED_TIMESTEP);
@@ -201,7 +202,15 @@ async function main() {
     registerVehicle(botVehicle);
     seekBot = createSeekBot(botVehicle, playerVehicle);
     if (import.meta.env.DEV) {
-      window.__debug = { playerVehicle, botVehicle, pickups, mines, projectiles, oilSegments };
+      window.__debug = {
+        playerVehicle,
+        botVehicle,
+        pickups,
+        mines,
+        projectiles,
+        oilSegments,
+        targetMarker,
+      };
       window.__debugWorld = world;
     }
   }
@@ -234,6 +243,35 @@ function removeDead(list) {
   for (let i = list.length - 1; i >= 0; i--) {
     if (list[i].dead) list.splice(i, 1);
   }
+}
+
+const _targetForward = new THREE.Vector3();
+const _targetQuat = new THREE.Quaternion();
+
+/**
+ * Recomputes `vehicle.activeTarget` from the currently selected weapon's
+ * targeting config (WEAPONS[type].targetingConeDegrees) — only weapons
+ * that need auto-targeting (currently just homing rockets) set that field,
+ * so this is a no-op (activeTarget stays null) for every other weapon.
+ */
+function updateActiveTarget(vehicle) {
+  const slot = vehicle.weaponSlots[vehicle.selectedWeaponIndex];
+  const config = slot ? WEAPONS[slot.type] : null;
+  if (!config?.targetingConeDegrees) {
+    vehicle.activeTarget = null;
+    return;
+  }
+
+  const rotation = vehicle.chassisBody.rotation();
+  _targetQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
+  _targetForward.set(0, 0, 1).applyQuaternion(_targetQuat);
+
+  vehicle.activeTarget = findBestTarget(
+    vehicle.chassisBody.translation(),
+    { x: _targetForward.x, z: _targetForward.z },
+    getAllVehicles().filter((candidate) => candidate !== vehicle),
+    { radius: config.range, coneDegrees: config.targetingConeDegrees },
+  );
 }
 
 main();
