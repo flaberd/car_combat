@@ -88,11 +88,21 @@ async function main() {
   const startGateEl = document.getElementById("start-gate");
   const startButtonEl = document.getElementById("start-button");
   const archetypeSelectEl = document.getElementById("archetype-select");
+  const gameOverEl = document.getElementById("game-over");
+  const restartButtonEl = document.getElementById("restart-button");
   const hud = createHud(document);
 
   let playerVehicle = null;
   let botVehicle = null;
   let seekBot = null;
+  // True once the player is eliminated (Game Over shown); freezes further
+  // physics/combat updates so the final frame stays put behind the overlay.
+  // "Play Again" reloads the page — simplest way to reset every subsystem's
+  // state (vehicles, mines/projectiles/oil segments, pickup availability,
+  // the combat registry) back to a clean slate, matching this project's
+  // existing no-persistence design (data-model.md: nothing survives a
+  // reload) rather than hand-rolling teardown for each one.
+  let matchOver = false;
 
   let physicsAccumulator = 0;
   let lastTime = performance.now();
@@ -104,64 +114,75 @@ async function main() {
     lastTime = now;
 
     if (!inputController.isGameplayBlocked()) {
-      const inputState = inputController.read();
-      const botInputState = seekBot.computeInputState();
+      if (!matchOver) {
+        const inputState = inputController.read();
+        const botInputState = seekBot.computeInputState();
 
-      // Weapon switching is edge-triggered per animate() frame (like the
-      // input read itself), not per physics substep — otherwise a single
-      // button press could cycle through several weapons in one frame.
-      if (inputState.switchWeaponPrev) switchWeapon(playerVehicle, -1);
-      if (inputState.switchWeaponNext) switchWeapon(playerVehicle, 1);
+        // Weapon switching is edge-triggered per animate() frame (like the
+        // input read itself), not per physics substep — otherwise a single
+        // button press could cycle through several weapons in one frame.
+        if (inputState.switchWeaponPrev) switchWeapon(playerVehicle, -1);
+        if (inputState.switchWeaponNext) switchWeapon(playerVehicle, 1);
 
-      physicsAccumulator += frameDelta;
-      while (physicsAccumulator >= FIXED_TIMESTEP) {
-        stepVehicleControl(playerVehicle, inputState, FIXED_TIMESTEP);
-        stepVehicleControl(botVehicle, botInputState, FIXED_TIMESTEP);
+        physicsAccumulator += frameDelta;
+        while (physicsAccumulator >= FIXED_TIMESTEP) {
+          stepVehicleControl(playerVehicle, inputState, FIXED_TIMESTEP);
+          stepVehicleControl(botVehicle, botInputState, FIXED_TIMESTEP);
 
-        updateMachineGunCooldown(playerVehicle, FIXED_TIMESTEP);
-        updateMachineGunCooldown(botVehicle, FIXED_TIMESTEP);
-        tryFireMachineGun(world, playerVehicle, inputState.fire);
-        tryFireMachineGun(world, botVehicle, botInputState.fire);
+          updateMachineGunCooldown(playerVehicle, FIXED_TIMESTEP);
+          updateMachineGunCooldown(botVehicle, FIXED_TIMESTEP);
+          tryFireMachineGun(world, playerVehicle, inputState.fire);
+          tryFireMachineGun(world, botVehicle, botInputState.fire);
 
-        updatePickupWeaponUse(
-          world,
-          scene,
-          playerVehicle,
-          botVehicle,
-          inputState,
-          FIXED_TIMESTEP,
-          { projectiles, mines, oilSegments },
-        );
+          updatePickupWeaponUse(
+            world,
+            scene,
+            playerVehicle,
+            botVehicle,
+            inputState,
+            FIXED_TIMESTEP,
+            { projectiles, mines, oilSegments },
+          );
 
-        for (const pickup of pickups) updatePickup(pickup, FIXED_TIMESTEP);
-        for (const mine of mines) updateMine(world, scene, mine, FIXED_TIMESTEP);
-        for (const segment of oilSegments) {
-          updateOilSlickSegment(world, scene, segment, FIXED_TIMESTEP);
-        }
-        for (const projectile of projectiles) {
-          updateProjectile(world, scene, projectile, FIXED_TIMESTEP);
-        }
-        removeDead(mines);
-        removeDead(oilSegments);
-        removeDead(projectiles);
-
-        world.step(eventQueue);
-        eventQueue.drainCollisionEvents((handle1, handle2, started) => {
-          for (const handler of collisionHandlers) {
-            handler(handle1, handle2, started);
+          for (const pickup of pickups) updatePickup(pickup, FIXED_TIMESTEP);
+          for (const mine of mines) updateMine(world, scene, mine, FIXED_TIMESTEP);
+          for (const segment of oilSegments) {
+            updateOilSlickSegment(world, scene, segment, FIXED_TIMESTEP);
           }
-        });
-        physicsAccumulator -= FIXED_TIMESTEP;
-      }
+          for (const projectile of projectiles) {
+            updateProjectile(world, scene, projectile, FIXED_TIMESTEP);
+          }
+          removeDead(mines);
+          removeDead(oilSegments);
+          removeDead(projectiles);
 
-      playerVehicle.syncMesh();
-      botVehicle.syncMesh();
-      followCamera.update(
-        frameDelta,
-        playerVehicle.mesh.position,
-        playerVehicle.mesh.quaternion,
-      );
-      hud.update(playerVehicle);
+          world.step(eventQueue);
+          eventQueue.drainCollisionEvents((handle1, handle2, started) => {
+            for (const handler of collisionHandlers) {
+              handler(handle1, handle2, started);
+            }
+          });
+          physicsAccumulator -= FIXED_TIMESTEP;
+
+          if (playerVehicle.eliminated) {
+            matchOver = true;
+            break;
+          }
+        }
+
+        playerVehicle.syncMesh();
+        botVehicle.syncMesh();
+        followCamera.update(
+          frameDelta,
+          playerVehicle.mesh.position,
+          playerVehicle.mesh.quaternion,
+        );
+        hud.update(playerVehicle);
+
+        if (matchOver) {
+          gameOverEl.classList.remove("hidden");
+        }
+      }
     }
 
     renderer.render(scene, camera);
@@ -202,6 +223,10 @@ async function main() {
     await startGate.start(inputController.getMode());
     startGateEl.classList.add("hidden");
     archetypeSelectEl.classList.remove("hidden");
+  });
+
+  restartButtonEl.addEventListener("click", () => {
+    window.location.reload();
   });
 }
 

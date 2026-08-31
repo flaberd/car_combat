@@ -225,3 +225,34 @@
 .archetype-button:active {
   background: #1a4fb0;
 }
+
+#game-over {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(17, 17, 17, 0.92);
+  color: #fff;
+  font: 700 40px/1 system-ui, sans-serif;
+  text-align: center;
+  padding: 24px;
+}
+
+#restart-button {
+  padding: 24px 64px;
+  border: none;
+  border-radius: 12px;
+  background: #2266dd;
+  color: #fff;
+  font: 700 32px/1 system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#restart-button:active {
+  background: #1a4fb0;
+}
