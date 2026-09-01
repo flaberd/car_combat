@@ -8,7 +8,11 @@ import { createVehicle, stepVehicleControl } from "./vehicle/vehicle.js";
 import { createSeekBot } from "./combat/seekBot.js";
 import { registerVehicle, unregisterVehicle, getAllVehicles } from "./combat/registry.js";
 import { handleRammingCollision } from "./combat/ramming.js";
-import { tryFireMachineGun, updateMachineGunCooldown } from "./combat/machineGun.js";
+import {
+  tryFireMachineGun,
+  updateMachineGunCooldown,
+  updateTracer,
+} from "./combat/machineGun.js";
 import { createPickup, handlePickupCollision, updatePickup } from "./combat/pickup.js";
 import { updateProjectile } from "./combat/projectile.js";
 import { updateMine, handleMineCollision } from "./combat/mine.js";
@@ -70,6 +74,7 @@ async function main() {
   const mines = [];
   const projectiles = [];
   const oilSegments = [];
+  const tracers = [];
   const targetMarker = createTargetMarker(scene);
   const botHealthBar = createWorldHealthBar(scene);
 
@@ -140,7 +145,7 @@ async function main() {
         while (physicsAccumulator >= FIXED_TIMESTEP) {
           stepVehicleControl(playerVehicle, inputState, FIXED_TIMESTEP);
           updateMachineGunCooldown(playerVehicle, FIXED_TIMESTEP);
-          tryFireMachineGun(world, playerVehicle, inputState.fire);
+          tryFireMachineGun(world, scene, playerVehicle, inputState.fire, tracers);
 
           if (botVehicle) {
             // Recomputed fresh every substep (not once per frame) — the bot
@@ -151,7 +156,7 @@ async function main() {
             const botInputState = seekBot.computeInputState();
             stepVehicleControl(botVehicle, botInputState, FIXED_TIMESTEP);
             updateMachineGunCooldown(botVehicle, FIXED_TIMESTEP);
-            tryFireMachineGun(world, botVehicle, botInputState.fire);
+            tryFireMachineGun(world, scene, botVehicle, botInputState.fire, tracers);
           }
 
           updatePickupWeaponUse(world, scene, playerVehicle, inputState, {
@@ -168,9 +173,13 @@ async function main() {
           for (const projectile of projectiles) {
             updateProjectile(world, scene, projectile, FIXED_TIMESTEP);
           }
+          for (const tracer of tracers) {
+            updateTracer(scene, tracer, FIXED_TIMESTEP);
+          }
           removeDead(mines);
           removeDead(oilSegments);
           removeDead(projectiles);
+          removeDead(tracers);
 
           world.step(eventQueue);
           eventQueue.drainCollisionEvents((handle1, handle2, started) => {
@@ -254,6 +263,7 @@ async function main() {
         mines,
         projectiles,
         oilSegments,
+        tracers,
         targetMarker,
         botHealthBar,
       };

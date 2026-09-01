@@ -25,7 +25,10 @@ win/loss flow (not yet built — see `docs/todo/knowledge-gaps.md`).
   simultaneously, proportional to each vehicle's own speed and mass at
   impact (see [Physics-Accurate Ramming Combat](../decisions/002-physics-accurate-ramming.md)).
 - **Machine gun**: always available, unlimited ammo, limited only by fire
-  rate — the baseline shooting option that needs no pickup.
+  rate — the baseline shooting option that needs no pickup. Hitscan (no
+  travelling projectile mesh), so every shot draws a short-lived tracer
+  line from muzzle to hit point (or to max range on a miss) as firing
+  feedback — see `src/combat/machineGun.js`.
 - **Archetypes**: the player picks Heavy, Light, or Balanced at spawn, each
   with distinct mass/HP/speed/handling/turbo.
 - **Pickups**: fixed arena locations, each tied to one weapon type. Driving
