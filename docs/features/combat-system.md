@@ -77,7 +77,7 @@ Rapier re-firing "contact started" on a sustained collision.
 | Machine gun | 3/hit | unlimited | fire rate 5/s, range 40m |
 | Rockets | 35/hit | 5 | straight-line, speed 60 m/s, range 60m |
 | Homing rockets | 25/hit | 3 | requires target lock, turn rate 4.5 rad/s, range 50m |
-| Mines | 40 on trigger | 3 | trigger radius 3m, arm delay 1s, lifetime 30s |
+| Mines | 40 on trigger | 3 | trigger radius 3m, arm delay 1s, lifetime 120s |
 | Oil slick | frictionMultiplier 0.3 | 2 | 8m trail (4 segments), effect lasts 3s |
 
 **Pickups** (`PICKUPS`): respawn delay 15s after collection. Only one
