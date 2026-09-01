@@ -121,7 +121,7 @@ export const WEAPONS = {
   },
   oilSlick: {
     frictionMultiplier: 0.3,
-    effectDuration: 3,
+    effectDuration: 30,
     ammoPerPickup: 2,
     trailLength: 8,
     segmentCount: 4,
