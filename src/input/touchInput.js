@@ -2,10 +2,11 @@ import { createVirtualJoystick } from "./virtualJoystick.js";
 
 /**
  * Pointer-Events-tracked on-screen button (data-model.md TouchButton). One
- * pointer at a time; `pressed` is live (for Drift's held behavior),
- * `consumeEdge()` returns true only once per press (for Turbo's
- * edge-triggered behavior, mirroring keyboard's turbo edge logic in
- * src/input/inputState.js) and resets after being read.
+ * pointer at a time; `pressed` is live (for Drift and Turbo's held
+ * behavior — the turbo charge meter in src/vehicle/turbo.js only drains
+ * while this stays true), `consumeEdge()` returns true only once per press
+ * (for edge-triggered controls like weapon switching, mirroring keyboard's
+ * edge logic in src/input/inputState.js) and resets after being read.
  */
 function createTouchButton(rootEl) {
   let activePointerId = null;
@@ -59,8 +60,9 @@ function createTouchButton(rootEl) {
  * as keyboard (src/input/inputState.js). The left joystick drives
  * moveAxis; there is no aim joystick — weapons fire in the vehicle's
  * facing direction (aimAxis stays {0,0}, 002-combat-system research.md
- * §9). Drift is held (matches keyboard Space); Turbo is edge-triggered
- * on press (matches keyboard Shift).
+ * §9). Drift and Turbo are both held (matches keyboard Space/Shift) —
+ * turbo boosts only while pressed and its charge meter recharges as soon
+ * as it's released.
  */
 export function createTouchInput(document) {
   const leftJoystick = createVirtualJoystick(
@@ -99,7 +101,7 @@ export function createTouchInput(document) {
         moveAxis: { x: leftJoystick.axis.x, y: leftJoystick.axis.y },
         aimAxis: { x: 0, y: 0 },
         drift: driftButton.pressed,
-        turbo: turboButton.consumeEdge(),
+        turbo: turboButton.pressed,
         fire: fireButton.pressed,
         usePickup: useButton.pressed,
         switchWeaponPrev: switchPrevButton.consumeEdge(),

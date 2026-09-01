@@ -16,10 +16,11 @@ const KEY_BINDINGS = {
 };
 
 // Held-key bindings whose InputState field is edge-triggered (true only on
-// the frame the key transitions from up to down) rather than live-held,
-// mirroring each other so a single tracked "was down last frame" set
-// covers turbo and weapon-switching alike.
-const EDGE_TRIGGERED_BINDINGS = ["turbo", "switchWeaponPrev", "switchWeaponNext"];
+// the frame the key transitions from up to down) rather than live-held.
+// Turbo is intentionally NOT here — it's live/held (see below) so the
+// turbo charge meter (src/vehicle/turbo.js) drains only while the key is
+// actually down and starts recharging the instant it's released.
+const EDGE_TRIGGERED_BINDINGS = ["switchWeaponPrev", "switchWeaponNext"];
 
 function isAnyDown(keysDown, codes) {
   return codes.some((code) => keysDown.has(code));
@@ -34,11 +35,9 @@ export function isBoundKeyCode(code) {
 
 /**
  * Pure mapping from a set of currently-held key codes to this frame's
- * InputState. `turbo`/`switchWeaponPrev`/`switchWeaponNext` are
- * edge-triggered (true only on the frame their key transitions from up to
- * down) so holding one doesn't repeatedly re-trigger — turbo shouldn't
- * re-fire once TurboState returns to `ready` (data-model.md TurboState,
- * FR-006), and weapon-switch shouldn't cycle every frame the key is held.
+ * InputState. `switchWeaponPrev`/`switchWeaponNext` are edge-triggered
+ * (true only on the frame their key transitions from up to down) so
+ * holding one doesn't cycle weapons every frame it's held.
  * `previousEdgeKeysDown` is the `edgeKeysDown` object this function
  * returned last frame (`{}` on the first call).
  */
@@ -60,7 +59,7 @@ export function mapKeysToInputState(keysDown, previousEdgeKeysDown = {}) {
     moveAxis: { x: right - left, y: forward - backward },
     aimAxis: { x: 0, y: 0 },
     drift: isAnyDown(keysDown, KEY_BINDINGS.drift),
-    turbo: edgeTriggered.turbo,
+    turbo: isAnyDown(keysDown, KEY_BINDINGS.turbo),
     fire: isAnyDown(keysDown, KEY_BINDINGS.fire),
     usePickup: isAnyDown(keysDown, KEY_BINDINGS.usePickup),
     switchWeaponPrev: edgeTriggered.switchWeaponPrev,

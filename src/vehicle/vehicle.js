@@ -189,10 +189,11 @@ export function computeCounterForceMultiplier(moveAxisY, currentSpeed, boost) {
 /**
  * Drive/steer/drift/turbo control step. Maps InputState.moveAxis to engine
  * force + steering (FR-002/FR-003), InputState.drift to the traction state
- * that governs side-friction (FR-004), and InputState.turbo to the
- * TurboState machine that temporarily scales engine force (FR-005/FR-006).
- * Enforces the vehicle's archetype maxSpeed (002-combat-system research.md
- * §7) and does nothing once the vehicle is eliminated.
+ * that governs side-friction (FR-004), and InputState.turbo (live, held)
+ * to the turbo charge meter that scales engine force while held and
+ * charge remains (FR-005/FR-006). Enforces the vehicle's archetype
+ * maxSpeed (002-combat-system research.md §7) and does nothing once the
+ * vehicle is eliminated.
  *
  * `updateVehicle` is called with EXCLUDE_SENSORS so the wheels' ground
  * raycasts ignore pickup/mine/oil-slick sensor colliders (002-combat-system)
@@ -213,8 +214,7 @@ export function stepVehicleControl(vehicle, inputState, dt) {
   const { controller, wheelDefs, turbo, archetype } = vehicle;
 
   updateTurboState(turbo, inputState.turbo, dt, archetype);
-  const turboMultiplier =
-    turbo.status === "boosting" ? archetype.turboBoostMultiplier : 1;
+  const turboMultiplier = turbo.boosting ? archetype.turboBoostMultiplier : 1;
 
   // Rapier's controller.currentVehicleSpeed() proved unreliable — it can
   // read large spurious sign flips frame-to-frame even during plain

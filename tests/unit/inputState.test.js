@@ -46,41 +46,38 @@ describe("mapKeysToInputState", () => {
     expect(mapKeysToInputState(new Set()).inputState.drift).toBe(false);
   });
 
-  it("edge-triggers turbo only on the up-to-down transition", () => {
-    const first = mapKeysToInputState(new Set(["ShiftLeft"]));
-    expect(first.inputState.turbo).toBe(true);
-    expect(first.edgeKeysDown.turbo).toBe(true);
+  it("reports turbo as held while the turbo key is down (live, not edge-triggered)", () => {
+    expect(
+      mapKeysToInputState(new Set(["ShiftLeft"])).inputState.turbo,
+    ).toBe(true);
+    expect(
+      mapKeysToInputState(new Set(["ShiftRight"])).inputState.turbo,
+    ).toBe(true);
+    expect(mapKeysToInputState(new Set()).inputState.turbo).toBe(false);
 
+    // Still true on a second read while held, unlike an edge-triggered field.
+    const first = mapKeysToInputState(new Set(["ShiftLeft"]));
     const second = mapKeysToInputState(
       new Set(["ShiftLeft"]),
       first.edgeKeysDown,
     );
-    expect(second.inputState.turbo).toBe(false);
-    expect(second.edgeKeysDown.turbo).toBe(true);
-
-    const released = mapKeysToInputState(new Set(), second.edgeKeysDown);
-    expect(released.inputState.turbo).toBe(false);
-    expect(released.edgeKeysDown.turbo).toBe(false);
-
-    const pressedAgain = mapKeysToInputState(
-      new Set(["ShiftRight"]),
-      released.edgeKeysDown,
-    );
-    expect(pressedAgain.inputState.turbo).toBe(true);
+    expect(second.inputState.turbo).toBe(true);
   });
 
-  it("edge-triggers weapon switching independently of turbo", () => {
+  it("edge-triggers weapon switching independently of turbo's live state", () => {
     const first = mapKeysToInputState(new Set(["KeyQ", "ShiftLeft"]));
     expect(first.inputState.switchWeaponPrev).toBe(true);
     expect(first.inputState.switchWeaponNext).toBe(false);
     expect(first.inputState.turbo).toBe(true);
 
-    // Holding KeyQ down doesn't keep re-triggering switchWeaponPrev.
+    // Holding KeyQ down doesn't keep re-triggering switchWeaponPrev, but
+    // turbo (live, not edge-triggered) stays true the whole time it's held.
     const second = mapKeysToInputState(
       new Set(["KeyQ", "ShiftLeft"]),
       first.edgeKeysDown,
     );
     expect(second.inputState.switchWeaponPrev).toBe(false);
+    expect(second.inputState.turbo).toBe(true);
 
     const nextPressed = mapKeysToInputState(
       new Set(["KeyR"]),
