@@ -92,6 +92,7 @@ export const WEAPONS = {
     damagePerHit: 3,
     fireRate: 5, // shots/sec; cooldown between shots = 1 / fireRate
     range: 40,
+    tracerLifetime: 0.05, // seconds a shot's tracer line stays visible
   },
   rockets: {
     damagePerHit: 35,
