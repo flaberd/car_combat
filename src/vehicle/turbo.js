@@ -1,44 +1,31 @@
-// TurboState state machine (data-model.md TurboState, FR-005/FR-006):
-// ready --(turbo pressed)--> boosting --(duration elapsed)--> cooling_down
-// --(cooldown elapsed)--> ready. No direct boosting/cooling_down -> boosting
-// shortcut: reactivation always waits for the full cooldown.
+// Turbo (data-model.md TurboState): a rechargeable boost meter, not a
+// fixed-duration ability. Boosting requires the turbo input held down AND
+// remaining charge; releasing the input stops the boost immediately and
+// the meter starts recharging right away. While held with an empty meter,
+// nothing happens (no boost, no recharge) until the button is released —
+// recharging only happens between presses, so a full hold-to-drain never
+// flickers between draining and recharging on the same frame.
 //
-// Boost/cooldown durations are per-archetype since 002-combat-system
-// (specs/002-combat-system/data-model.md ArchetypeConfig), passed in rather
-// than imported, so this module stays archetype-agnostic.
+// Charge drains at `1 / turboBoostDuration` per second while boosting and
+// refills at `1 / turboCooldown` per second while released, so those two
+// per-archetype tunables now read as "seconds of continuous boost from a
+// full charge" and "seconds to fully recharge from empty" respectively.
 
 export function createTurboState() {
-  return { status: "ready", boostElapsed: 0, cooldownElapsed: 0 };
+  return { charge: 1, boosting: false };
 }
 
 /**
- * Mutates and returns `turbo` in place. `turboPressed` must be
- * edge-triggered (see input/inputState.js). `durations` is
- * `{ turboBoostDuration, turboCooldown }` from the vehicle's archetype.
+ * Mutates and returns `turbo` in place. `turboHeld` is the live (held, not
+ * edge-triggered) turbo input state — see input/inputState.js. `durations`
+ * is `{ turboBoostDuration, turboCooldown }` from the vehicle's archetype.
  */
-export function updateTurboState(turbo, turboPressed, dt, durations) {
-  switch (turbo.status) {
-    case "ready":
-      if (turboPressed) {
-        turbo.status = "boosting";
-        turbo.boostElapsed = 0;
-      }
-      break;
-    case "boosting":
-      turbo.boostElapsed += dt;
-      if (turbo.boostElapsed >= durations.turboBoostDuration) {
-        turbo.status = "cooling_down";
-        turbo.cooldownElapsed = 0;
-      }
-      break;
-    case "cooling_down":
-      turbo.cooldownElapsed += dt;
-      if (turbo.cooldownElapsed >= durations.turboCooldown) {
-        turbo.status = "ready";
-      }
-      break;
-    default:
-      break;
+export function updateTurboState(turbo, turboHeld, dt, durations) {
+  turbo.boosting = turboHeld && turbo.charge > 0;
+  if (turbo.boosting) {
+    turbo.charge = Math.max(0, turbo.charge - dt / durations.turboBoostDuration);
+  } else if (!turboHeld) {
+    turbo.charge = Math.min(1, turbo.charge + dt / durations.turboCooldown);
   }
   return turbo;
 }

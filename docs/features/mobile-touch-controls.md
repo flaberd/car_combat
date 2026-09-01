@@ -58,9 +58,9 @@ explicit non-goals, see
 - A released or interrupted joystick touch (including `pointercancel`, e.g.
   an incoming-call overlay) returns that joystick to `{0,0}` rather than
   sticking at its last position.
-- Turbo's on-screen button is edge-triggered on press (matches keyboard
-  Shift's edge-triggering, see [Core Vehicle Loop](core-vehicle-loop.md));
-  Drift's button is held, matching keyboard Space.
+- Turbo's on-screen button is held, same as Drift's (both match their
+  keyboard equivalents, Shift and Space) — turbo boosts only while pressed,
+  see [Core Vehicle Loop](core-vehicle-loop.md).
 - No persistence: input-method and orientation state are re-detected fresh
   on every page load.
 

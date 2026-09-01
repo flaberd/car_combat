@@ -18,9 +18,9 @@ const CRITICAL_HP_RATIO = 0.25;
  * shown here — it has unlimited ammo and needs no pickup.
  *
  * Turbo (src/vehicle/turbo.js TurboState) has no on-screen feedback
- * otherwise, so a player holding it down repeatedly can't tell it's on a
- * cooldown rather than firing every press — the bar drains while boosting
- * and refills during cooldown, mirroring the HP bar's style.
+ * otherwise, so there'd be no way to see the charge meter draining while
+ * held or recharging once released — the bar drains while boosting and
+ * refills once released, mirroring the HP bar's style.
  */
 export function createHud(document) {
   const rootEl = document.getElementById("hud");
@@ -48,19 +48,19 @@ export function createHud(document) {
     hpTextEl.textContent = `${Math.round(hp)} / ${maxHp}`;
 
     const { turbo, archetype } = vehicle;
-    let turboRatio = 1;
-    let turboText = "Turbo Ready";
-    if (turbo.status === "boosting") {
-      turboRatio = 1 - turbo.boostElapsed / archetype.turboBoostDuration;
+    const isRecharging = !turbo.boosting && turbo.charge < 1;
+    let turboText;
+    if (turbo.boosting) {
       turboText = "Turbo Boosting";
-    } else if (turbo.status === "cooling_down") {
-      turboRatio = turbo.cooldownElapsed / archetype.turboCooldown;
-      const remaining = archetype.turboCooldown - turbo.cooldownElapsed;
-      turboText = `Turbo: ${Math.max(0, remaining).toFixed(1)}s`;
+    } else if (isRecharging) {
+      const secondsToFull = (1 - turbo.charge) * archetype.turboCooldown;
+      turboText = `Turbo: ${secondsToFull.toFixed(1)}s`;
+    } else {
+      turboText = "Turbo Ready";
     }
-    turboFillEl.style.width = `${Math.max(0, Math.min(1, turboRatio)) * 100}%`;
-    turboFillEl.classList.toggle("boosting", turbo.status === "boosting");
-    turboFillEl.classList.toggle("cooling", turbo.status === "cooling_down");
+    turboFillEl.style.width = `${turbo.charge * 100}%`;
+    turboFillEl.classList.toggle("boosting", turbo.boosting);
+    turboFillEl.classList.toggle("cooling", isRecharging);
     turboTextEl.textContent = turboText;
 
     const slot = vehicle.weaponSlots[vehicle.selectedWeaponIndex];

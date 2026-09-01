@@ -53,11 +53,17 @@ Current values from `src/config/tuning.js` (tunable via playtesting):
 
 **Archetypes** (`ARCHETYPES`):
 
-| Archetype | Mass | Max HP | Max Speed | Turn | Turbo cooldown | Turbo boost |
+| Archetype | Mass | Max HP | Max Speed | Turn | Turbo recharge (empty→full) | Turbo boost (×multiplier / seconds held to drain) |
 |---|---|---|---|---|---|---|
 | Heavy | 1500 | 150 | 40 | low (0.35) | 8s | ×1.4 / 2s |
 | Light | 700 | 80 | 70 | high (0.65) | 4s | ×1.25 / 1.5s |
 | Balanced | 1000 | 110 | 55 | medium (0.5) | 6s | ×1.3 / 1.75s |
+
+Turbo is a held button, not a tap: it boosts continuously while held and
+charge remains, drains at a rate that empties a full charge in the
+"seconds held to drain" value above, and recharges at a rate that refills
+an empty meter in the "recharge" value above — see
+[Core Vehicle Loop](core-vehicle-loop.md).
 
 **Ramming** (`RAM`): `damage = (speed − minImpactSpeed) × mass × k`, where
 `k = 0.004` and `minImpactSpeed = 3` m/s (below this, a bump deals no

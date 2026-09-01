@@ -34,7 +34,7 @@ per-vehicle state.
 
 **Responsibility**: The player/bot-controlled car — chassis/wheel setup on
 top of Rapier's raycast vehicle controller, drift traction switching, and
-the turbo state machine.
+the turbo charge meter.
 
 **Boundaries**: Archetype stats (mass/HP/speed/turn/turbo values) are data,
 owned by `src/config/tuning.js`; this module consumes them but does not
