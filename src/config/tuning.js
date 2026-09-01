@@ -26,7 +26,7 @@ export const ARCHETYPES = {
     mass: 1500,
     maxHp: 150,
     maxSpeed: 40,
-    engineForce: 2400,
+    engineForce: 2750,
     maxSteerAngle: 0.35, // low turn rate / poor handling
     turboCooldown: 8,
     turboBoostMultiplier: 1.4,
@@ -37,7 +37,7 @@ export const ARCHETYPES = {
     mass: 700,
     maxHp: 80,
     maxSpeed: 70,
-    engineForce: 1400,
+    engineForce: 1600,
     maxSteerAngle: 0.65, // high turn rate
     turboCooldown: 4,
     turboBoostMultiplier: 1.25,
@@ -48,7 +48,7 @@ export const ARCHETYPES = {
     mass: 1000,
     maxHp: 110,
     maxSpeed: 55,
-    engineForce: 1800,
+    engineForce: 2050,
     maxSteerAngle: 0.5, // medium turn rate
     turboCooldown: 6,
     turboBoostMultiplier: 1.3,
