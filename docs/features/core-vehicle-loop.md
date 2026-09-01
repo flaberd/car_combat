@@ -29,7 +29,9 @@ Combat (weapons, ramming damage, archetypes) is covered by
 - Holding drift shifts the vehicle into a lower-lateral-traction handling
   state (sliding); releasing it restores normal handling.
 - Turbo temporarily boosts speed/acceleration, then enters a cooldown during
-  which it cannot be reactivated.
+  which it cannot be reactivated. A HUD bar (`src/ui/hud.js`) shows this:
+  full while ready, draining while boosting, refilling with a countdown
+  while on cooldown.
 - The arena is a grey-box ground plane with boundary geometry that
   physically contains the vehicle (no passing through walls).
 
@@ -77,6 +79,7 @@ Systems
 - `src/vehicle/vehicle.js` — chassis/wheel setup, per-frame control step
 - `src/vehicle/drift.js` — traction-state switching
 - `src/vehicle/turbo.js` — turbo state machine (`ready` → `boosting` → `cooling_down`)
+- `src/ui/hud.js` — turbo readiness bar/text (also owns HP/weapon HUD, see [Combat System](combat-system.md))
 - `src/physics/world.js` — Rapier world setup/step
 - `src/arena/arena.js` — ground + boundary colliders
 - `src/camera/followCamera.js` — third-person follow camera
