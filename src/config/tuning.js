@@ -117,7 +117,7 @@ export const WEAPONS = {
     ammoPerPickup: 3,
     triggerRadius: 3,
     armDelay: 1,
-    lifetime: 30,
+    lifetime: 120,
   },
   oilSlick: {
     frictionMultiplier: 0.3,
