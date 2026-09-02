@@ -80,6 +80,14 @@ Rapier re-firing "contact started" on a sustained collision.
 | Mines | 40 on trigger | 3 | trigger radius 3m, arm delay 1s, lifetime 120s |
 | Oil slick | frictionMultiplier 0.3 | 2 | 8m trail (4 segments), effect lasts 30s |
 
+Oil slick's `frictionMultiplier` scales both cornering grip (side-friction
+stiffness) and engine force (`src/vehicle/vehicle.js` `stepVehicleControl` —
+folded into the same multiplier chain as turbo boost) — it's noticeable
+driving straight through it, not only while turning. Scaling Rapier's wheel
+`frictionSlip` down was tried first for the straight-line case and rejected:
+empirically it made the vehicle accelerate *faster* at lower values in this
+raycast vehicle controller, the opposite of real tire grip.
+
 **Pickups** (`PICKUPS`): respawn delay 15s after collection. Only one
 pickup-type weapon can be held at a time — collecting a new one discards the
 previous weapon's remaining ammo.
