@@ -25,6 +25,17 @@ likely not built yet. Write a feature doc once it exists in code.
 
 ---
 
+## `?video` recording mode isn't documented as a feature
+
+`src/main.js` (`VIDEO_MODE`) adds a dev-only presentation toggle enabled by
+appending `?video` to the URL: hides the HUD and every touch button except
+the movement joystick, and skips spawning the bot/pickups, for recording
+clean driving footage. Not a gameplay feature and not exposed in any UI, so
+no `docs/features/` entry — flagged here in case it grows into something
+that needs one (e.g. more toggles, a debug-tools doc).
+
+---
+
 ## Deployment/dev-setup workflow isn't documented under `docs/`
 
 `.github/workflows/deploy.yml` handles GitHub Pages deployment and

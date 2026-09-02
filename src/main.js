@@ -36,7 +36,15 @@ const PICKUP_LAYOUT = [
   { type: "oilSlick", position: { x: -20, y: 1, z: -25 } },
 ];
 
+// Video-recording mode (?video in the URL): a dev-only presentation toggle,
+// not a gameplay feature — hides the HUD and every touch button except the
+// movement joystick, and skips spawning the bot/pickups, so a clean driving
+// clip can be recorded without combat or UI clutter in frame.
+const VIDEO_MODE = new URLSearchParams(window.location.search).has("video");
+
 async function main() {
+  if (VIDEO_MODE) document.body.classList.add("video-mode");
+
   const canvas = document.getElementById("app");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -68,9 +76,11 @@ async function main() {
     handleOilSlickCollision,
   ];
 
-  const pickups = PICKUP_LAYOUT.map(({ type, position }) =>
-    createPickup(world, scene, type, position),
-  );
+  const pickups = VIDEO_MODE
+    ? []
+    : PICKUP_LAYOUT.map(({ type, position }) =>
+        createPickup(world, scene, type, position),
+      );
   const mines = [];
   const projectiles = [];
   const oilSegments = [];
@@ -254,7 +264,7 @@ async function main() {
       color: 0x2266dd,
     });
     registerVehicle(playerVehicle);
-    spawnBot();
+    if (!VIDEO_MODE) spawnBot();
     if (import.meta.env.DEV) {
       window.__debug = {
         playerVehicle,
@@ -277,7 +287,7 @@ async function main() {
       button.addEventListener("click", () => {
         archetypeSelectEl.classList.add("hidden");
         spawnMatch(button.dataset.archetype);
-        hud.show();
+        if (!VIDEO_MODE) hud.show();
         hud.update(playerVehicle);
         lastTime = performance.now();
         requestAnimationFrame(animate);
