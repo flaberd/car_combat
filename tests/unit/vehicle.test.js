@@ -29,6 +29,13 @@ describe("computeEngineForce", () => {
     );
     expect(boosted).toBeGreaterThan(base);
   });
+
+  it("weakens acceleration when combined with a sub-1 multiplier (oil slick)", () => {
+    const base = computeEngineForce(ARCHETYPES.balanced, 1, 1);
+    const inOil = computeEngineForce(ARCHETYPES.balanced, 1, 0.3);
+    expect(inOil).toBeLessThan(base);
+    expect(inOil).toBeCloseTo(base * 0.3);
+  });
 });
 
 describe("computeSteerAngle", () => {

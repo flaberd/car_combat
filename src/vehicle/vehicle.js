@@ -152,12 +152,13 @@ export function createVehicle(world, scene, archetype, options = {}) {
 
 /**
  * Pure: engine force for this frame from the vehicle's archetype, throttle
- * input, and turbo multiplier (002-combat-system data-model.md
- * ArchetypeConfig) — extracted so archetype differentiation is testable
- * without a live physics world (research.md §11).
+ * input, and a combined multiplier (turbo boost × counter-force brake
+ * boost × oil-slick penalty — see stepVehicleControl) — extracted so
+ * archetype differentiation is testable without a live physics world
+ * (research.md §11).
  */
-export function computeEngineForce(archetype, moveAxisY, turboMultiplier) {
-  return archetype.engineForce * moveAxisY * turboMultiplier;
+export function computeEngineForce(archetype, moveAxisY, multiplier) {
+  return archetype.engineForce * moveAxisY * multiplier;
 }
 
 /** Pure: steering angle for this frame from the vehicle's archetype and steer input. */
@@ -228,10 +229,18 @@ export function stepVehicleControl(vehicle, inputState, dt) {
     currentSpeed,
     VEHICLE_SHAPE.brakeBoost,
   );
+  // vehicle.oilSlickMultiplier also weakens engine force (not just
+  // cornering side-friction below) so oil is noticeable driving straight
+  // through it, not only while turning. Tried scaling Rapier's wheel
+  // frictionSlip for this first — empirically that made the vehicle
+  // accelerate FASTER at lower values in this raycast vehicle controller
+  // (the opposite of real tire grip), so don't reach for that API to
+  // simulate reduced traction; scaling the engine-force input itself is
+  // unambiguous and physics-engine-agnostic.
   const engineForce = computeEngineForce(
     archetype,
     inputState.moveAxis.y,
-    turboMultiplier * counterForceMultiplier,
+    turboMultiplier * counterForceMultiplier * vehicle.oilSlickMultiplier,
   );
   const steerAngle = computeSteerAngle(archetype, inputState.moveAxis.x);
 
