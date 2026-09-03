@@ -6,9 +6,16 @@
 }
 
 /* Video-recording mode (?video in the URL, see src/main.js VIDEO_MODE) —
-   a dev-only presentation toggle: keep the movement joystick, hide every
-   other on-screen button so a clean driving clip can be recorded. */
-body.video-mode .touch-button {
+   a dev-only presentation toggle: keep the movement joystick and the
+   turbo button + its HUD readiness bar, hide every other on-screen
+   button/HUD element so a clean driving+turbo clip can be recorded. */
+body.video-mode .touch-button:not(#touch-button-turbo) {
+  display: none;
+}
+
+body.video-mode #hud-hp-track,
+body.video-mode #hud-hp-text,
+body.video-mode #hud-weapon-text {
   display: none;
 }
 
