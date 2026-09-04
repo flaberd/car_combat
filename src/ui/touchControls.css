@@ -6,10 +6,12 @@
 }
 
 /* Video-recording mode (?video in the URL, see src/main.js VIDEO_MODE) —
-   a dev-only presentation toggle: keep the movement joystick and the
-   turbo button + its HUD readiness bar, hide every other on-screen
-   button/HUD element so a clean driving+turbo clip can be recorded. */
-body.video-mode .touch-button:not(#touch-button-turbo) {
+   a dev-only presentation toggle: keep the movement joystick, the turbo
+   button + its HUD readiness bar, and the fire button (machine gun is
+   always available, no pickup needed), hide every other on-screen
+   button/HUD element so a clean clip can be recorded. */
+body.video-mode
+  .touch-button:not(#touch-button-turbo):not(#touch-button-fire) {
   display: none;
 }
 
