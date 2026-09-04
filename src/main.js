@@ -40,8 +40,9 @@ const PICKUP_LAYOUT = [
 // not a gameplay feature — keeps only the movement joystick, the turbo
 // button + its HUD readiness bar, and the fire button (see
 // touchControls.css; machine gun is always available, no pickup needed),
-// hides everything else in #hud/#touch-controls, and skips spawning the
-// bot/pickups, so a clean driving+turbo+shooting clip can be recorded
+// hides everything else in #hud/#touch-controls, and skips spawning
+// pickups (the bot still spawns normally, as a target for filming the
+// machine gun), so a clean driving+turbo+shooting clip can be recorded
 // without other UI clutter in frame.
 const VIDEO_MODE = new URLSearchParams(window.location.search).has("video");
 
@@ -267,7 +268,7 @@ async function main() {
       color: 0x2266dd,
     });
     registerVehicle(playerVehicle);
-    if (!VIDEO_MODE) spawnBot();
+    spawnBot();
     if (import.meta.env.DEV) {
       window.__debug = {
         playerVehicle,

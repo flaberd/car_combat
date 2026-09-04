@@ -30,11 +30,11 @@ likely not built yet. Write a feature doc once it exists in code.
 `src/main.js` (`VIDEO_MODE`) adds a dev-only presentation toggle enabled by
 appending `?video` to the URL: keeps only the movement joystick, the turbo
 button + its HUD readiness bar, and the fire button, hides everything else
-in `#hud`/`#touch-controls`, and skips spawning the bot/pickups, for
-recording clean driving+turbo+shooting footage. Not a gameplay feature and
-not exposed in any UI, so no `docs/features/` entry — flagged here in case
-it grows into something that needs one (e.g. more toggles, a debug-tools
-doc).
+in `#hud`/`#touch-controls`, and skips spawning pickups (the bot still
+spawns normally, as a target for filming the machine gun), for recording
+clean driving+turbo+shooting footage. Not a gameplay feature and not
+exposed in any UI, so no `docs/features/` entry — flagged here in case it
+grows into something that needs one (e.g. more toggles, a debug-tools doc).
 
 ---
 
